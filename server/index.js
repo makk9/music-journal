@@ -2,9 +2,6 @@ const express = require("express")
 const request = require('request')
 const dotenv = require("dotenv")
 
-//const router = express.Router();
-
-
 const port = 5000
 
 dotenv.config()

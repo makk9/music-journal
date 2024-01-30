@@ -8,6 +8,13 @@ const track = {
   artists: [{ name: "" }],
 };
 
+//TODO: Maintain play controls even after switching to controls on native spotify(original device).
+/*FIXME: Duplicate local SpotifyConnect devices(same name) from device list in native spotify(original device). 
+* Also controls only work sometimes. So figure this out. Is it due to something being stored in local storage?
+* Can not seamlessly switch between devices. Have issues where WebPlayer does not show up when switching multiple times.
+* Also is queue getting messed up when streaming to MusicJournal? 
+*/
+
 function WebPlayback(props) {
   const [player, setPlayer] = useState(undefined);
 
@@ -53,6 +60,15 @@ function WebPlayback(props) {
           !state ? setActive(false) : setActive(true);
         });
       });
+
+      player.addListener('ready', ({ device_id }) => {
+        console.log('The Web Playback SDK is ready to play music!');
+        console.log('Device ID', device_id);
+      })
+
+      player.setName("Music Journal").then(() => {
+        console.log('Player name updated!')
+      })
 
       player.connect();
     };
