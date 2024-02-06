@@ -9,27 +9,41 @@ const track = {
 };
 
 //TODO: Maintain play controls even after switching to controls on native spotify(original device).
-/*FIXME: Duplicate local SpotifyConnect devices(same name) from device list in native spotify(original device).
-* Also controls only work sometimes. So figure this out. Is it due to something being stored in local storage?
-* Can not seamlessly switch between devices. Have issues where WebPlayer does not show up when switching multiple times.
-* Also is queue getting messed up when streaming to MusicJournal? I'm almost positive, queue is somehow getting reset everytime web play is used.
-*/
+/*FIXME: When disconnecting from device, getting Runtime Error("Cannot read properties of null (reading 'album')")
+ * Can not seamlessly switch between devices. Have issues where WebPlayer does not show up when switching multiple times.
+ * Queue is getting reset/messed up when switching back to device.
+ */
 
 function WebPlayback(props) {
   const [player, setPlayer] = useState(undefined);
-
   const [is_paused, setPaused] = useState(false);
   const [is_active, setActive] = useState(false);
   const [current_track, setTrack] = useState(track);
 
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://sdk.scdn.co/spotify-player.js";
-    script.async = true;
+    // check if script is already loaded to prevent unncessary multiple times loading
+    if (!document.getElementById("spotify-player-script")) {
+      const script = document.createElement("script");
+      script.id = "spotify-player-script";
+      script.src = "https://sdk.scdn.co/spotify-player.js";
+      script.async = true;
 
-    document.body.appendChild(script);
+      document.body.appendChild(script);
+    }
 
+    // This function will be called when the component unmounts or before the effect re-runs
+    const cleanup = () => {
+      // Disconnect the player if it's connected
+      if (window.Spotify && player) {
+        player.disconnect();
+      }
+      // Remove the callback to prevent it from being called multiple times
+      window.onSpotifyWebPlaybackSDKReady = null;
+    };
+
+    //const uniqueDeviceName = `MusicJournal-${Date.now()}`;
     window.onSpotifyWebPlaybackSDKReady = () => {
+      console.log("CREATING NEW PLAYER");
       const player = new window.Spotify.Player({
         name: "Music Journal",
         getOAuthToken: (cb) => {
@@ -61,24 +75,26 @@ function WebPlayback(props) {
         });
       });
 
-      player.addListener('ready', ({ device_id }) => {
-        console.log('The Web Playback SDK is ready to play music!');
-        console.log('Device ID', device_id);
-      })
+      player.addListener("ready", ({ device_id }) => {
+        console.log("The Web Playback SDK is ready to play music!");
+        console.log("Device ID", device_id);
+      });
 
       player.connect();
     };
-  }, [props.token]);
+
+    return cleanup;
+  }, [props.token, player]);
 
   return (
     <>
       <div className="container">
         <div className="main-wrapper">
-          <img src={current_track.album.images[0].url} className="now-playing__cover" alt="" />
+          <img src={current_track.album.images[0]?.url} className="now-playing__cover" alt="" />
 
           <div className="now-playing__side">
             <div className="now-playing__name">{current_track.name}</div>
-            <div className="now-playing__artist">{current_track.artists[0].name}</div>
+            <div className="now-playing__artist">{current_track.artists[0]?.name}</div>
 
             <button
               className="btn-spotify"
