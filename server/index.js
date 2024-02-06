@@ -1,10 +1,12 @@
 const express = require("express")
 const request = require('request')
 const dotenv = require("dotenv")
+const path = require('path');
+
 
 const port = 5000
 
-global.access_token = ''
+var access_token = ''
 
 
 dotenv.config()
@@ -62,7 +64,7 @@ app.get('/auth/callback', (req, res) => {
     };
 
     request.post(authOptions, function (error, response, body) {
-        if (!error && response.statusCode == 200) {
+        if (!error && response.statusCode === 200) {
             access_token = body.access_token;
             res.redirect('/')
         }
@@ -79,3 +81,5 @@ app.get('/auth/token', (req, res) => {
 app.listen(port, () => {
     console.log(`Listening at http://localhost:${port}`)
 })
+
+app.use(express.static(path.join(__dirname, 'build')));
