@@ -64,6 +64,10 @@ function WebPlayback(props) {
 
       player.addListener("player_state_changed", (state) => {
         if (!state) {
+          console.log("State is null, resetting track information");
+          setTrack(track);
+          setPaused(true);
+          setActive(false);
           return;
         }
 
@@ -90,16 +94,24 @@ function WebPlayback(props) {
     <>
       <div className="container">
         <div className="main-wrapper">
-          <img src={current_track.album.images[0]?.url} className="now-playing__cover" alt="" />
+          {/* Conditional rendering to ensure current_track and its properties are not null */}
+          {current_track && current_track.album && current_track.album.images.length > 0 ? (
+            <img src={current_track.album.images[0].url} className="now-playing__cover" alt="" />
+          ) : (
+            // Render a placeholder or nothing if current_track is not ready
+            <div className="now-playing__cover-placeholder"></div>
+          )}
 
           <div className="now-playing__side">
-            <div className="now-playing__name">{current_track.name}</div>
-            <div className="now-playing__artist">{current_track.artists[0]?.name}</div>
+            <div className="now-playing__name">{current_track ? current_track.name : "No track playing"}</div>
+            <div className="now-playing__artist">
+              {current_track && current_track.artists.length > 0 ? current_track.artists[0].name : "Unknown artist"}
+            </div>
 
             <button
               className="btn-spotify"
               onClick={() => {
-                player.previousTrack();
+                player && player.previousTrack();
               }}
             >
               &lt;&lt;
@@ -108,7 +120,7 @@ function WebPlayback(props) {
             <button
               className="btn-spotify"
               onClick={() => {
-                player.togglePlay();
+                player && player.togglePlay();
               }}
             >
               {is_paused ? "PLAY" : "PAUSE"}
@@ -117,7 +129,7 @@ function WebPlayback(props) {
             <button
               className="btn-spotify"
               onClick={() => {
-                player.nextTrack();
+                player && player.nextTrack();
               }}
             >
               &gt;&gt;
