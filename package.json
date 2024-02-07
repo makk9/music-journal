@@ -1,45 +1,61 @@
-  {
+{
     "name": "spotify-web-player",
     "version": "0.1.0",
     "private": true,
     "dependencies": {
-      "@testing-library/jest-dom": "^5.17.0",
-      "@testing-library/react": "^13.4.0",
-      "@testing-library/user-event": "^13.5.0",
-      "react": "^18.2.0",
-      "react-dom": "^18.2.0",
-      "react-scripts": "^5.0.1",
-      "web-vitals": "^2.1.4"
+        "@svgr/plugin-svgo": "^8.1.0",
+        "@svgr/webpack": "^8.1.0",
+        "@testing-library/jest-dom": "^5.17.0",
+        "@testing-library/react": "^13.4.0",
+        "@testing-library/user-event": "^13.5.0",
+        "axios": "^1.6.7",
+        "css-select": "^5.1.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-scripts": "^5.0.1",
+        "resolve-url-loader": "^5.0.0",
+        "svgo": "^3.2.0",
+        "web-vitals": "^2.1.4"
     },
     "scripts": {
-      "start": "react-scripts --openssl-legacy-provider start",
-      "build": "react-scripts build",
-      "server": "node server",
-      "dev": "run-p server start"
+        "start": "react-scripts --openssl-legacy-provider start",
+        "build": "react-scripts build",
+        "server": "node server",
+        "dev": "run-p server start"
     },
     "eslintConfig": {
-      "extends": [
-        "react-app",
-        "react-app/jest"
-      ]
+        "extends": [
+            "react-app",
+            "react-app/jest"
+        ]
     },
     "browserslist": {
-      "production": [
-        ">0.2%",
-        "not dead",
-        "not op_mini all"
-      ],
-      "development": [
-        "last 1 chrome version",
-        "last 1 firefox version",
-        "last 1 safari version"
-      ]
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
     },
     "devDependencies": {
-      "dotenv": "^16.4.1",
-      "express": "^4.18.2",
-      "http-proxy-middleware": "^2.0.6",
-      "npm-run-all": "^4.1.5",
-      "request": "^2.88.2"
+        "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+        "dotenv": "^16.4.1",
+        "express": "^4.18.2",
+        "http-proxy-middleware": "^2.0.6",
+        "npm-run-all": "^4.1.5"
+    },
+    "overrides": {
+        "css-select": {
+            "nth-check": "^2.0.1"
+        },
+        "react-scripts": {
+            "resolve-url-loader": {
+                "postcss": "^8.4.31"
+            }
+        }
     }
-  }
+}
