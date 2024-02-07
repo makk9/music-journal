@@ -8,12 +8,6 @@ const track = {
   artists: [{ name: "" }],
 };
 
-//TODO: Maintain play controls even after switching to controls on native spotify(original device).
-/*FIXME: When disconnecting from device, getting Runtime Error("Cannot read properties of null (reading 'album')")
- * Can not seamlessly switch between devices. Have issues where WebPlayer does not show up when switching multiple times.
- * Queue is getting reset/messed up when switching back to device.
- */
-
 function WebPlayback(props) {
   const [player, setPlayer] = useState(undefined);
   const [is_paused, setPaused] = useState(false);
