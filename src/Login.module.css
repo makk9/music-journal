@@ -1,0 +1,11 @@
+.loginSpotifyBtn {
+    /*color: #1DB954; /* Example: Spotify green */
+    color: #eb6ead;
+    text-decoration: none; /* Optionally removes underline */
+}
+
+.loginSpotifyBtn:hover {
+    /*color: #1ED760; /* Lighter green on hover */
+    color: #ed80b6;
+}
+
