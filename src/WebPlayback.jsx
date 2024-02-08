@@ -8,6 +8,12 @@ const track = {
   artists: [{ name: "" }],
 };
 
+/* TODO: 
+ * Add comments
+ * Add tests 
+ * Playback backdrop 
+*/
+
 function WebPlayback(props) {
   const [player, setPlayer] = useState(undefined);
   const [is_paused, setPaused] = useState(false);
