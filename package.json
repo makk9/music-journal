@@ -20,6 +20,7 @@
     "scripts": {
         "start": "react-scripts --openssl-legacy-provider start",
         "build": "react-scripts build",
+        "test": "react-scripts test",
         "server": "node server",
         "dev": "run-p server start"
     },
