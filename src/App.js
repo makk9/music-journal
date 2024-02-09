@@ -19,6 +19,7 @@ function App() {
 
   }, []);
 
+  // renders Login page if blank token, else renders WebPlayback page
   return (
     <>
       {(token === '') ? <Login /> : <WebPlayback token={token} />}
