@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import App from './App';
-import WebPlayback from './WebPlayback';
-import Login from './Login';
+// import WebPlayback from './WebPlayback';
+// import Login from './Login';
 
 // Mock child components - Webplayback and Login
 jest.mock('./WebPlayback', () => {
@@ -27,6 +27,7 @@ const mockFetch = (accessToken) => {
   );
 };
 
+// suite for testing App behavior with empty vs. non-empty token
 describe('App', () => {
   it('renders Login component when there is no token', () => {
     mockFetch(''); // Mock fetch to return empty token
