@@ -2,15 +2,15 @@ const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./musicjournalApp.db');
 
 db.serialize(() => {
-    // Users Table
-    db.run(`CREATE TABLE IF NOT EXISTS users (
+  // Users Table
+  db.run(`CREATE TABLE IF NOT EXISTS users (
     userID TEXT PRIMARY KEY,
     username TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE
   );`);
 
-    // Tracks Table
-    db.run(`CREATE TABLE IF NOT EXISTS tracks (
+  // Tracks Table
+  db.run(`CREATE TABLE IF NOT EXISTS tracks (
     trackID TEXT PRIMARY KEY,
     spotifyTrackID TEXT NOT NULL,
     title TEXT NOT NULL,
@@ -18,8 +18,8 @@ db.serialize(() => {
     album TEXT NOT NULL
   );`);
 
-    // Journal Entries Table
-    db.run(`CREATE TABLE IF NOT EXISTS journal_entries (
+  // Journal Entries Table
+  db.run(`CREATE TABLE IF NOT EXISTS journal_entries (
     entryID TEXT PRIMARY KEY,
     userID TEXT NOT NULL,
     trackID TEXT NOT NULL,
