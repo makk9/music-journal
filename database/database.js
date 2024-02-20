@@ -1,11 +1,17 @@
 const sqlite3 = require('sqlite3').verbose();
 
-// Open a database connection
-let db = new sqlite3.Database('./musicjournalApp.db', sqlite3.OPEN_READWRITE, (err) => {
+const dbFile = process.env.NODE_ENV === 'test' ? ':memory:' : './musicjournalApp.db';
+
+// Open a database connection and initialize file based on test environment or not
+let db = new sqlite3.Database(dbFile, sqlite3.OPEN_READWRITE | (dbFile === ':memory:' ? sqlite3.OPEN_CREATE : 0), (err) => {
     if (err) {
         console.error(err.message);
+    } else {
+        console.log('Connected to the SQLite database.');
+        if (dbFile === ':memory:') {
+            console.log('Using in-memory database for testing.');
+        }
     }
-    console.log('Connected to the journalApp.db SQLite database.');
 });
 
 /**
@@ -203,6 +209,7 @@ const closeDb = () => {
 
 // Exports the functions for use in other parts of the application
 module.exports = {
+    db,
     addUser,
     addTrack,
     addJournalEntry,

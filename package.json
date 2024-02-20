@@ -23,6 +23,7 @@
         "start": "react-scripts --openssl-legacy-provider start",
         "build": "react-scripts build",
         "test": "react-scripts test",
+        "test-jest": "cross-env NODE_ENV=test jest --verbose ./database",
         "server": "node server",
         "dev": "run-p server start",
         "setup-db": "node ./database/setupDb.js"
