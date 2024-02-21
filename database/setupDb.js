@@ -2,6 +2,13 @@ const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./musicjournalApp.db');
 
 db.serialize(() => {
+  // Enable foreign key support
+  db.run("PRAGMA foreign_keys = ON;", (err) => {
+    if (err) {
+      console.error("Error enabling foreign key support:", err.message);
+    }
+  });
+
   // Users Table
   db.run(`CREATE TABLE IF NOT EXISTS users (
     userID TEXT PRIMARY KEY,
