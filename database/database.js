@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const dbFile = process.env.NODE_ENV === 'test' ? ':memory:' : './musicjournalApp.db';
 
 // Open a database connection and initialize file based on test environment or not
-let db = new sqlite3.Database(dbFile, sqlite3.OPEN_READWRITE | (dbFile === ':memory:' ? sqlite3.OPEN_CREATE : 0), (err) => {
+let db = new sqlite3.Database(dbFile, sqlite3.OPEN_READWRITE | (dbFile === ':memory:' ? sqlite3.OPEN_CREATE : 0), function (err) {
     if (err) {
         console.error(err.message);
     } else {
@@ -23,7 +23,7 @@ function addUser(user, callback) {
     const { userID, username, email } = user;
     const sql = `INSERT INTO users (userID, username, email) VALUES (?, ?, ?)`;
 
-    db.run(sql, [userID, username, email], (err) => {
+    db.run(sql, [userID, username, email], function (err) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err);
@@ -43,7 +43,7 @@ function addTrack(track, callback) {
     const { trackID, spotifyTrackID, title, artist, album } = track;
     const sql = `INSERT INTO tracks (trackID, spotifyTrackID, title, artist, album) VALUES (?, ?, ?, ?, ?)`;
 
-    db.run(sql, [trackID, spotifyTrackID, title, artist, album], (err) => {
+    db.run(sql, [trackID, spotifyTrackID, title, artist, album], function (err) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err);
@@ -64,7 +64,7 @@ function addJournalEntry(entry, callback) {
     const sql = `INSERT INTO journal_entries (entryID, userID, trackID, entryText, imageURL, createdAt, updatedAt)
                VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-    db.run(sql, [entryID, userID, trackID, entryText, imageURL, createdAt, updatedAt], (err) => {
+    db.run(sql, [entryID, userID, trackID, entryText, imageURL, createdAt, updatedAt], function (err) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err); // communicate to caller of failure of operation
@@ -83,7 +83,7 @@ function addJournalEntry(entry, callback) {
 function getJournalEntriesByTrackID(trackID, userID, callback) {
     const sql = `SELECT * FROM journal_entries WHERE trackID = ? AND userID = ?`;
 
-    db.all(sql, [trackID, userID], (err, rows) => {
+    db.all(sql, [trackID, userID], function (err, rows) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err, null);
@@ -101,15 +101,33 @@ function getJournalEntriesByTrackID(trackID, userID, callback) {
  * @param {function} callback - A callback function that is called after the update operation is completed.
  */
 function updateJournalEntry(entryID, userID, data, callback) {
-    const { entryText, imageURL, updatedAt } = data;
+    //const { entryText, imageURL, updatedAt } = data;
+    let fieldsToUpdate = [];
+    let sqlValues = [];
+
+    // check which updatable fields provided and need updating
+
+    if (data.entryText !== undefined) {
+        fieldsToUpdate.push("entryText = ?");
+        sqlValues.push(data.entryText);
+    }
+
+    if (data.imageURL !== undefined) {
+        fieldsToUpdate.push("imageURL = ?");
+        sqlValues.push(data.imageURL);
+    }
+
+    fieldsToUpdate.push("updatedAt = ?");
+    sqlValues.push(data.updatedAt);
+
+    sqlValues.push(entryID, userID);
+
     const sql = `
         UPDATE journal_entries
-        SET entryText = ?,
-            imageURL = ?,
-            updatedAt = ?
+        SET ${fieldsToUpdate.join(", ")}
         WHERE entryID = ? AND userID = ?`;
 
-    db.run(sql, [entryText, imageURL, updatedAt, entryID, userID], function (err) {
+    db.run(sql, sqlValues, function (err) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err); // Communicate to the caller the failure of the operation
@@ -135,7 +153,7 @@ function updateJournalEntry(entryID, userID, data, callback) {
 function deleteJournalEntry(entryID, userID, callback) {
     const sql = 'DELETE FROM journal_entries WHERE entryID = ? AND userID = ?';
 
-    db.run(sql, [entryID, userID], (err) => {
+    db.run(sql, [entryID, userID], function (err) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err);
@@ -159,7 +177,7 @@ function deleteJournalEntry(entryID, userID, callback) {
 function checkUserExists(email, callback) {
     const sql = `SELECT * FROM users WHERE email = ?`;
 
-    db.get(sql, [email], (err, row) => {
+    db.get(sql, [email], function (err, row) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err, null);
@@ -171,8 +189,8 @@ function checkUserExists(email, callback) {
 };
 
 // Closes database connection
-const closeDb = () => {
-    db.close((err) => {
+function closeDb() {
+    db.close(function (err) {
         if (err) {
             console.error(err.message);
         }
