@@ -3,11 +3,11 @@ const { db, addUser, addTrack, addJournalEntry, getJournalEntriesByTrackID,
     updateJournalEntry, deleteJournalEntry, checkUserExists } = require('./database');
 
 // Initialize database schema for testing
-beforeAll((done) => {
-    db.serialize(() => {
+beforeAll(function (done) {
+    db.serialize(function () {
 
         // Enable foreign key support
-        db.run("PRAGMA foreign_keys = ON;", (err) => {
+        db.run("PRAGMA foreign_keys = ON;", function (err) {
             if (err) {
                 console.error("Error enabling foreign key support:", err.message);
             }
@@ -41,7 +41,7 @@ beforeAll((done) => {
     });
 });
 
-afterAll(() => {
+afterAll(function () {
     db.close();
 });
 

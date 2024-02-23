@@ -23,7 +23,7 @@ var spotify_redirect_uri = "http://localhost:3000/auth/callback"
  */
 
 // Generates a random string across the alphabet(lowercase & uppercase) and figits
-var generateRandomString = function (length) {
+function generateRandomString(length) {
     var text = '';
     var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -34,7 +34,7 @@ var generateRandomString = function (length) {
 };
 
 // Generates universally unique identifier that is highly unlikely to collide
-const generateUniqueID = () => {
+function generateUniqueID() {
     return uuidv4(); // Generates a unique UUID
 };
 
@@ -49,7 +49,7 @@ async function createUserAfterSpotifyAuth(spotifyProfile) {
     const { id: spotifyUserID, email, display_name: username } = spotifyProfile;
 
     // Check if user exists
-    db.checkUserExists(email, (err, exists) => {
+    db.checkUserExists(email, function (err, exists) {
         if (err) {
             console.error('Database error:', err);
             return;
@@ -61,7 +61,7 @@ async function createUserAfterSpotifyAuth(spotifyProfile) {
                 userID: spotifyUserID, // Using Spotify's user ID as userID in database
                 username: username,
                 email: email
-            }, (err) => {
+            }, function (err) {
                 if (err) {
                     console.error('Failed to add user:', err);
                 } else {
@@ -137,7 +137,7 @@ var app = express();
  * It constructs the URL for Spotify's authorization request and
  * redirects the client to Spotify's OAuth login page.
  */
-app.get('/auth/login', (req, res) => {
+app.get('/auth/login', function (req, res) {
 
     var scope = "streaming user-read-email user-read-private"
     var state = generateRandomString(16);
@@ -161,7 +161,7 @@ app.get('/auth/login', (req, res) => {
  * fetches the user's profile using the access token, creates or updates the user in the local database,
  * and then redirects the user to the home page of the application.
  */
-app.get('/auth/callback', (req, res) => {
+app.get('/auth/callback', function (req, res) {
     var code = req.query.code;
 
     // configuration for POST request to Spotify's api/token endpoint -- exchanges authorization code for access token
@@ -209,7 +209,7 @@ app.get('/auth/callback', (req, res) => {
 });
 
 // Endpoint fetches access token
-app.get('/auth/token', (req, res) => {
+app.get('/auth/token', function (req, res) {
     res.json(
         {
             access_token: access_token
@@ -222,7 +222,7 @@ app.get('/auth/token', (req, res) => {
 // Could also be cool if you can find color that "pops" out the most in an album that's not within the defined borders of album art.
 
 // Endpoint to dynamically set backgroudn color of application based on primary color extracted from album art.
-app.get('/image-color', async (req, res) => {
+app.get('/image-color', async function (req, res) {
     const imageUrl = req.query.url;
     if (!imageUrl) {
         return res.status(400).send('No image URL provided');
@@ -272,7 +272,7 @@ app.get('/image-color', async (req, res) => {
 // });
 
 // Endpoint adds track that has been posted from client to database
-app.post('/track', authenticateUser, (req, res) => {
+app.post('/track', authenticateUser, function (req, res) {
     const { spotifyTrackID, title, artist, album } = req.body;
     const trackID = generateUniqueID();
 
@@ -283,7 +283,7 @@ app.post('/track', authenticateUser, (req, res) => {
         title,
         artist,
         album
-    }, (err) => {
+    }, function (err) {
         if (err) {
             console.error('Failed to add track:', err);
             res.status(500).send('Failed to add track');
@@ -295,7 +295,7 @@ app.post('/track', authenticateUser, (req, res) => {
 
 
 // Endpoint handles adding new journal entry that has been posted from client to database
-app.post('/journal', authenticateUser, (req, res) => {
+app.post('/journal', authenticateUser, function (req, res) {
     // Extract journal entry details from request body
     const { userID, trackID, entryText, imageURL } = req.body;
 
@@ -313,7 +313,7 @@ app.post('/journal', authenticateUser, (req, res) => {
         imageURL,
         createdAt,
         updatedAt
-    }, (err) => {
+    }, function (err) {
         if (err) {
             console.error('Failed to add journal entry:', err);
             res.status(500).send('Failed to add journal entry');
@@ -324,11 +324,11 @@ app.post('/journal', authenticateUser, (req, res) => {
 });
 
 // Endpoint to get journal entries for specific track ID from database
-app.get('/journal/:trackId', authenticateUser, (req, res) => {
+app.get('/journal/:trackId', authenticateUser, function (req, res) {
     const { trackId } = req.params;
     const userID = req.user.userID; // get user ID that is attached to req from authenticateUser
 
-    db.getJournalEntriesByTrackID(trackId, userID, (err, entries) => {
+    db.getJournalEntriesByTrackID(trackId, userID, function (err, entries) {
         if (err) {
             console.error('Failed to retrieve journal entries:', err);
             res.status(500).send('Failed to retrieve journal entries');
@@ -339,14 +339,14 @@ app.get('/journal/:trackId', authenticateUser, (req, res) => {
 });
 
 // Endpoint to update existing journal entry from database
-app.put('/journal/:entryId', authenticateUser, (req, res) => {
+app.put('/journal/:entryId', authenticateUser, function (req, res) {
     const { entryId } = req.params;
     const { entryText, imageURL } = req.body;
     const updatedAt = new Date().toISOString();
 
     const userID = req.user.userID;
 
-    db.updateJournalEntry(entryId, userID, { entryText, imageURL, updatedAt }, (err) => {
+    db.updateJournalEntry(entryId, userID, { entryText, imageURL, updatedAt }, function (err) {
         if (err) {
             console.error('Failed to update journal entry:', err);
             res.status(500).send('Failed to update journal entry');
@@ -357,11 +357,11 @@ app.put('/journal/:entryId', authenticateUser, (req, res) => {
 });
 
 // Endpoint to delete existing journal entry based on entryID from database
-app.delete('/journal/:entryId', authenticateUser, (req, res) => {
+app.delete('/journal/:entryId', authenticateUser, function (req, res) {
     const { entryId } = req.params;
     const userID = req.user.userID;
 
-    db.deleteJournalEntry(entryId, userID, (err) => {
+    db.deleteJournalEntry(entryId, userID, function (err) {
         if (err) {
             console.error('Failed to delete journal entry:', err);
             res.status(500).send('Failed to delete journal entry');
@@ -371,11 +371,15 @@ app.delete('/journal/:entryId', authenticateUser, (req, res) => {
     });
 });
 
-
-app.listen(port, () => {
-    console.log(`Listening at http://localhost:${port}`)
-})
+// Only start the server if this file is run directly
+if (require.main === module) {
+    app.listen(port, function () {
+        console.log(`Listening at http://localhost:${port}`);
+    });
+}
 
 // enables server to serve React application's static files 
 // useful for production environment where server and frontend can be on same domain and port
 app.use(express.static(path.join(__dirname, 'build')));
+
+module.exports = { app, generateRandomString };
