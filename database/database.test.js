@@ -1,6 +1,6 @@
 
-const { db, addUser, addTrack, addJournalEntry, getJournalEntriesByTrackID,
-    updateJournalEntry, deleteJournalEntry, checkUserExists } = require('./database');
+const { db, addUser, getUserBySpotifyID, addTrack, addJournalEntry, getJournalEntriesByTrackID,
+    updateJournalEntry, deleteJournalEntry, checkUserExists, createUserAfterSpotifyAuth } = require('./database');
 
 // Initialize database schema for testing
 beforeAll(function (done) {
@@ -106,6 +106,29 @@ test('addUser adds users to the database', function (done) {
     });
 });
 
+// Test getUserBySpotifyID function
+test('getUserBySpotifyID gets user by spotify ID from database', function (done) {
+    const validUserID1 = 'testUser1';
+    const testUser1 = {
+        userID: 'testUser1',
+        username: 'Test User1',
+        email: 'testuser1@example.com'
+    };
+    const invalidUserID2 = 'testUser3';
+
+    // TEST 1: Get valid user ID from database
+    getUserBySpotifyID(validUserID1, function (err, user) {
+        expect(err).toBeNull();
+        expect(user[0]).toEqual(testUser1);
+
+        // TEST 2: Get invalid userID from database
+        getUserBySpotifyID(invalidUserID2, function (err, user) {
+            expect(err).toBeNull();
+            expect(user[0]).toBeUndefined();
+            done();
+        });
+    });
+});
 
 // Test addTrack function
 test('addTrack adds tracks to the database', function (done) {
@@ -431,7 +454,7 @@ test('deleteJournalEntry deletes journal entries from the database', function (d
     const testUserID1 = 'testUser1';
     const invalidUserID = 'testUser7';
 
-    // Verify the journal entries count linked with userID after deletion
+    // Verify the journal entries count linked with userID before deletion
     db.get("SELECT COUNT(*) AS count FROM journal_entries WHERE userID = ?", [testUserID1], function (err, result) {
         expect(err).toBeNull();
         expect(result.count).toBe(2); // testUserID1 has 2 journal entry before deletion(testEntry1 and testEntry3)
@@ -487,5 +510,52 @@ test('checkUserExists checks if user exists in the database', function (done) {
             expect(row).toBe(false);
             done();
         })
+    });
+});
+
+// Test deleteJournalEntry function
+test('createUserAfterSpotifyAuthh creates new user if spotify profile does not exist in database', function (done) {
+    // spotify profile already existent in database
+    const spotifyProfile1 = {
+        id: 'testUser2',
+        email: 'testuser2@example.com',
+        display_name: 'Test User 2'
+    }
+
+    // new spotify profile non-existent in database 
+    const spotifyProfileBatman = {
+        id: 'iambatman',
+        email: 'batman@iambatman.com',
+        display_name: 'BATMAN'
+    }
+
+    // check count of users before for baseline
+    db.get(`SELECT COUNT(userID) AS userCount FROM users`, [], function (err, countResult) {
+        expect(err).toBeNull();
+        expect(countResult.userCount).toBe(2);
+
+        // TEST 1: Create user on a spotify profile already existent in database
+        createUserAfterSpotifyAuth(spotifyProfile1, function (err, spotifyProfile) {
+            expect(err).toBeNull();
+
+            // check count of users does not change after
+            db.get(`SELECT COUNT(userID) AS userCount FROM users`, [], function (err, countResult) {
+                expect(err).toBeNull();
+                expect(countResult.userCount).toBe(2);
+
+                // TEST 2: Create user on a spotify profile non-existent in database
+                createUserAfterSpotifyAuth(spotifyProfileBatman, function (err, spotifyProfile) {
+                    expect(err).toBeNull();
+                    expect(spotifyProfile).toBe(spotifyProfileBatman);
+
+                    // check count of users does not change after
+                    db.get(`SELECT COUNT(userID) AS userCount FROM users`, [], function (err, countResult) {
+                        expect(err).toBeNull();
+                        expect(countResult.userCount).toBe(3);
+                        done();
+                    });
+                });
+            });
+        });
     });
 });

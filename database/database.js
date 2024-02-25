@@ -26,13 +26,32 @@ function addUser(user, callback) {
     db.run(sql, [userID, username, email], function (err) {
         if (err) {
             console.error('Database error:', err.message);
-            callback(err);
+            callback(err, null);
         } else {
             console.log('A new user has been added with ID:', userID);
             callback(null, userID);
         }
     });
 };
+
+/**
+ * Get user by Spotify ID.
+ * @param {string} userID - The spotify ID of the user for which to retrieve.
+ * @param {Function} callback - A callback function to be called with the results.
+ */
+function getUserBySpotifyID(userID, callback) {
+    const sql = `SELECT * FROM users WHERE userID = ?`;
+
+    db.all(sql, [userID], function (err, row) {
+        if (err) {
+            console.error('Database error:', err.message);
+            callback(err, null);
+        } else {
+            console.log('User have been retrieved with spotify ID:', userID);
+            callback(null, row);
+        }
+    });
+}
 
 /**
  * Adds a new track to the database.
@@ -46,7 +65,7 @@ function addTrack(track, callback) {
     db.run(sql, [trackID, spotifyTrackID, title, artist, album], function (err) {
         if (err) {
             console.error('Database error:', err.message);
-            callback(err);
+            callback(err, null);
         } else {
             console.log('A new track has been added with ID:', trackID);
             callback(null, trackID);
@@ -67,7 +86,7 @@ function addJournalEntry(entry, callback) {
     db.run(sql, [entryID, userID, trackID, entryText, imageURL, createdAt, updatedAt], function (err) {
         if (err) {
             console.error('Database error:', err.message);
-            callback(err); // communicate to caller of failure of operation
+            callback(err, null); // communicate to caller of failure of operation
         } else {
             console.log('A journal entry has been added with ID:', entryID);
             callback(null, entryID);
@@ -130,7 +149,7 @@ function updateJournalEntry(entryID, userID, data, callback) {
     db.run(sql, sqlValues, function (err) {
         if (err) {
             console.error('Database error:', err.message);
-            callback(err); // Communicate to the caller the failure of the operation
+            callback(err, null); // Communicate to the caller the failure of the operation
         } else {
             console.log(`A journal entry has been updated with ID: ${entryID}`);
             // this.changes is a property of the context object in sqlite3's run method callback
@@ -156,11 +175,11 @@ function deleteJournalEntry(entryID, userID, callback) {
     db.run(sql, [entryID, userID], function (err) {
         if (err) {
             console.error('Database error:', err.message);
-            callback(err);
+            callback(err, null);
         } else {
             console.log(`A journal entry has been deleted with ID: ${entryID}`);
             if (this.changes > 0) {
-                callback(null);
+                callback(null, null);
             } else {
                 console.log('No journal entry found with that ID.');
                 callback(new Error('No journal entry found with that ID.'));
@@ -187,6 +206,45 @@ function checkUserExists(email, callback) {
         }
     });
 };
+
+/**
+ * Checks if user, identified by their Spotify email, already exists in the database.
+ * If the user does not exist, creates a new user entry using details from the Spotify profile.
+ * @param {Object} spotifyProfile - The user's profile information from Spotify.
+ * @param {function} callback - A callback function that is called after the update operation is completed.
+ */
+async function createUserAfterSpotifyAuth(spotifyProfile, callback) {
+    const { id: spotifyUserID, email, display_name: username } = spotifyProfile;
+
+    // Check if user exists
+    checkUserExists(email, function (err, exists) {
+        if (err) {
+            console.error('Database error:', err);
+            callback(err, null);
+            return;
+        }
+
+        if (!exists) {
+            // User does not exist, add them
+            addUser({
+                userID: spotifyUserID, // Using Spotify's user ID as userID in User database
+                email: email,
+                username: username
+            }, function (err) {
+                if (err) {
+                    console.error('Failed to add user:', err);
+                    callback(err, null);
+                } else {
+                    console.log('User added successfully');
+                    callback(null, spotifyProfile);
+                }
+            });
+        } else {
+            console.log('User already exists in the database.');
+            callback(null, spotifyProfile);
+        }
+    });
+}
 
 // Closes database connection
 function closeDb() {
@@ -229,11 +287,13 @@ function closeDb() {
 module.exports = {
     db,
     addUser,
+    getUserBySpotifyID,
     addTrack,
     addJournalEntry,
     getJournalEntriesByTrackID,
     updateJournalEntry,
     deleteJournalEntry,
     checkUserExists,
+    createUserAfterSpotifyAuth,
     closeDb,
 };
