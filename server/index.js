@@ -38,41 +38,24 @@ function generateUniqueID() {
     return uuidv4(); // Generates a unique UUID
 };
 
-
 /**
- * Checks if user, identified by their Spotify email, already exists in the database.
- * If the user does not exist, creates a new user entry using details from the Spotify profile.
- * @param {Object} spotifyProfile - The user's profile information from Spotify.
- *    Includes the Spotify user ID, email, and display name.
+ * Fetches the Spotify user profile using the access token.
+ * @param {string} accessToken The Spotify access token.
+ * @return {Promise<Object|null>} The user profile object or null if the request fails.
  */
-async function createUserAfterSpotifyAuth(spotifyProfile) {
-    const { id: spotifyUserID, email, display_name: username } = spotifyProfile;
-
-    // Check if user exists
-    db.checkUserExists(email, function (err, exists) {
-        if (err) {
-            console.error('Database error:', err);
-            return;
-        }
-
-        if (!exists) {
-            // User does not exist, add them
-            db.addUser({
-                userID: spotifyUserID, // Using Spotify's user ID as userID in database
-                username: username,
-                email: email
-            }, function (err) {
-                if (err) {
-                    console.error('Failed to add user:', err);
-                } else {
-                    console.log('User added successfully');
-                }
-            });
-        } else {
-            console.log('User already exists in the database.');
-        }
-    });
-}
+async function fetchSpotifyUserProfile(accessToken) {
+    try {
+        const response = await axios.get('https://api.spotify.com/v1/me', {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+        return response.data; // The user profile data from Spotify
+    } catch (error) {
+        console.error('Error fetching Spotify user profile:', error);
+        return null;
+    }
+};
 
 /**
  * Middleware function to authenticate the user for each request.
@@ -93,11 +76,13 @@ async function authenticateUser(req, res, next) {
     try {
         // Validate access token with Spotify and fetch user profile
         const userProfile = await fetchSpotifyUserProfile(accessToken);
+        console.log("USER PROFILE" + userProfile);
         if (!userProfile) {
+            //console.log("USER PROFILE HERE" + userProfile);
             return res.status(401).send('Invalid access token');
         }
 
-        const user = await db.getUserBySpotifyId(userProfile.id);
+        const user = await db.getUserBySpotifyID(userProfile.id);
         if (!user) {
             return res.status(404).send('User not found');
         }
@@ -108,25 +93,6 @@ async function authenticateUser(req, res, next) {
     } catch (error) {
         console.error('Authentication error:', error);
         res.status(500).send('Internal server error');
-    }
-};
-
-/**
- * Fetches the Spotify user profile using the access token.
- * @param {string} accessToken The Spotify access token.
- * @return {Promise<Object|null>} The user profile object or null if the request fails.
- */
-async function fetchSpotifyUserProfile(accessToken) {
-    try {
-        const response = await axios.get('https://api.spotify.com/v1/me', {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
-        });
-        return response.data; // The user profile data from Spotify
-    } catch (error) {
-        console.error('Error fetching Spotify user profile:', error);
-        return null;
     }
 };
 
@@ -196,9 +162,15 @@ app.get('/auth/callback', function (req, res) {
                 throw new Error('Failed to obtain access token');
             }
         }).then(response => {
-            // With Spotify profile fetched, call the helper function to create the user
+            // With Spotify profile fetched, call function to create the user
             const spotifyProfile = response.data;
-            return createUserAfterSpotifyAuth(spotifyProfile);
+            return db.createUserAfterSpotifyAuth(spotifyProfile, function (err, result) {
+                if (err) {
+                    console.error('Failed to create user after Spotify auth:', err);
+                } else {
+                    console.log('User created or updated successfully');
+                }
+            });
         }).then(() => {
             // Redirect or handle the authenticated user in your app
             res.redirect('/');
@@ -220,6 +192,7 @@ app.get('/auth/token', function (req, res) {
 // Reason being is that a contrast of the background with the edges of album art makes art pop out more and looks better I think. Just conjecture.
 // Also could be cool to have the option to set your own background and somehow merge album art background with it.
 // Could also be cool if you can find color that "pops" out the most in an album that's not within the defined borders of album art.
+// Also, if we could somehow ignore the skin color of any human on the cover why extracting theme color could be ideal. 
 
 // Endpoint to dynamically set backgroudn color of application based on primary color extracted from album art.
 app.get('/image-color', async function (req, res) {
@@ -382,4 +355,4 @@ if (require.main === module) {
 // useful for production environment where server and frontend can be on same domain and port
 app.use(express.static(path.join(__dirname, 'build')));
 
-module.exports = { app, generateRandomString };
+module.exports = { app, generateRandomString, fetchSpotifyUserProfile, authenticateUser };
