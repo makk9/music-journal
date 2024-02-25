@@ -47,7 +47,7 @@ function getUserBySpotifyID(userID, callback) {
             console.error('Database error:', err.message);
             callback(err, null);
         } else {
-            console.log('User have been retrieved with spotify ID:', userID);
+            console.log('User has been retrieved with spotify ID:', userID);
             callback(null, row);
         }
     });
