@@ -5,6 +5,8 @@ const path = require('path');
 const Vibrant = require('node-vibrant');
 const db = require('../database/database.js');
 const { v4: uuidv4 } = require('uuid');
+const cookieParser = require('cookie-parser');
+
 
 
 const port = 5000
@@ -68,7 +70,11 @@ async function fetchSpotifyUserProfile(accessToken) {
  * @param {Function} next - The next middleware function in the stack.
  */
 async function authenticateUser(req, res, next) {
-    const accessToken = req.headers.authorization?.split(' ')[1];
+    //const accessToken = req.headers.authorization?.split(' ')[1];
+
+    const accessToken = req.cookies.accessToken;
+
+    console.log("ACCESS TOKEN: " + accessToken);
     if (!accessToken) {
         return res.status(401).send('Access token required');
     }
@@ -76,27 +82,39 @@ async function authenticateUser(req, res, next) {
     try {
         // Validate access token with Spotify and fetch user profile
         const userProfile = await fetchSpotifyUserProfile(accessToken);
-        console.log("USER PROFILE" + userProfile);
         if (!userProfile) {
             //console.log("USER PROFILE HERE" + userProfile);
             return res.status(401).send('Invalid access token');
         }
 
-        const user = await db.getUserBySpotifyID(userProfile.id);
-        if (!user) {
-            return res.status(404).send('User not found');
-        }
+        const user = await new Promise(function (resolve, reject) {
+            db.getUserBySpotifyID(userProfile.id, function (err, row) {
+                if (err) {
+                    console.error('Failed to retrieve user:', err);
+                    reject(new Error('Failed to retrieve user'));
+                } else if (row) {
+                    resolve(row);
+                } else {
+                    reject(new Error('User not found'));
+                }
+            });
+        });
 
         // Attach user to the request for downstream use
         req.user = user;
         next();
     } catch (error) {
         console.error('Authentication error:', error);
-        res.status(500).send('Internal server error');
+        if (error.message === 'User not found') {
+            res.status(404).send('User not found');
+        } else {
+            res.status(500).send('Internal server error');
+        }
     }
 };
 
 var app = express();
+app.use(cookieParser()); // Enable cookie parsing to read our access_token stored in a HttpOnly cookie
 
 /**
  * Endpoint to initiate the Spotify OAuth authentication flow.
@@ -172,6 +190,8 @@ app.get('/auth/callback', function (req, res) {
                 }
             });
         }).then(() => {
+            // Setting access_token to HttpOnly Cookie
+            res.cookie('accessToken', access_token, { httpOnly: true, secure: true, sameSite: 'Strict' });
             // Redirect or handle the authenticated user in your app
             res.redirect('/');
         }).catch(error => {
@@ -195,7 +215,8 @@ app.get('/auth/token', function (req, res) {
 // Also, if we could somehow ignore the skin color of any human on the cover why extracting theme color could be ideal. 
 
 // Endpoint to dynamically set backgroudn color of application based on primary color extracted from album art.
-app.get('/image-color', async function (req, res) {
+app.get('/image-color', authenticateUser, async function (req, res) {
+    console.log("IMAGE COLOR ENDPOINT");
     const imageUrl = req.query.url;
     if (!imageUrl) {
         return res.status(400).send('No image URL provided');
@@ -246,6 +267,7 @@ app.get('/image-color', async function (req, res) {
 
 // Endpoint adds track that has been posted from client to database
 app.post('/track', authenticateUser, function (req, res) {
+    console.log("TRACK ENDPOINT");
     const { spotifyTrackID, title, artist, album } = req.body;
     const trackID = generateUniqueID();
 
@@ -269,6 +291,7 @@ app.post('/track', authenticateUser, function (req, res) {
 
 // Endpoint handles adding new journal entry that has been posted from client to database
 app.post('/journal', authenticateUser, function (req, res) {
+    console.log("JOURNAL ENDPOINT");
     // Extract journal entry details from request body
     const { userID, trackID, entryText, imageURL } = req.body;
 
@@ -298,6 +321,7 @@ app.post('/journal', authenticateUser, function (req, res) {
 
 // Endpoint to get journal entries for specific track ID from database
 app.get('/journal/:trackId', authenticateUser, function (req, res) {
+    console.log("GET JOURNAL ENDPOINT");
     const { trackId } = req.params;
     const userID = req.user.userID; // get user ID that is attached to req from authenticateUser
 
@@ -313,6 +337,7 @@ app.get('/journal/:trackId', authenticateUser, function (req, res) {
 
 // Endpoint to update existing journal entry from database
 app.put('/journal/:entryId', authenticateUser, function (req, res) {
+    console.log("UPDATE ENTRY ENDPOINT");
     const { entryId } = req.params;
     const { entryText, imageURL } = req.body;
     const updatedAt = new Date().toISOString();
@@ -331,6 +356,7 @@ app.put('/journal/:entryId', authenticateUser, function (req, res) {
 
 // Endpoint to delete existing journal entry based on entryID from database
 app.delete('/journal/:entryId', authenticateUser, function (req, res) {
+    console.log("DELETE ENDPOINT");
     const { entryId } = req.params;
     const userID = req.user.userID;
 

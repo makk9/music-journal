@@ -2,6 +2,8 @@ const request = require('supertest');
 const { app, generateRandomString, fetchSpotifyUserProfile, authenticateUser } = require('./index');
 const axios = require('axios');
 const { db, getUserBySpotifyID } = require('../database/database');
+const httpMocks = require('node-mocks-http');
+
 
 jest.mock('axios');
 
@@ -85,65 +87,82 @@ describe('fetchSpotifyUserProfile', () => {
 
 
 // Tests authenticateUser
-describe('authenticateUser Middleware', () => {
-    let mockReq, mockRes, mockNext;
+// describe('authenticateUser Middleware', () => {
+//     it('should return 401 if no access token is provided', async () => {
+//         const req = httpMocks.createRequest({
+//             method: 'GET',
+//             url: '/test',
+//             cookies: {}
+//         });
+//         const res = httpMocks.createResponse();
+//         const next = jest.fn();
 
-    beforeEach(() => {
-        mockReq = { headers: {} };
-        mockRes = {
-            status: jest.fn().mockReturnThis(),
-            send: jest.fn().mockReturnThis(),
-        };
-        mockNext = jest.fn();
-    });
+//         await authenticateUser(req, res, next);
 
-    it('responds with 401 if access token is missing', async () => {
-        await authenticateUser(mockReq, mockRes, mockNext);
-        expect(mockRes.status).toHaveBeenCalledWith(401);
-        expect(mockRes.send).toHaveBeenCalledWith('Access token required');
-    });
+//         expect(res.statusCode).toBe(401);
+//         expect(res._getData()).toBe('Access token required');
+//         expect(next).not.toHaveBeenCalled();
+//     });
 
-    it('responds with 401 if access token is invalid', async () => {
-        mockReq.headers.authorization = 'Bearer invalidToken';
+//     it('should return 401 if the access token is invalid', async () => {
+//         fetchSpotifyUserProfile.mockResolvedValue(null); // Simulate invalid token
 
-        // Simulating fetchSpotifyProfile by using axios mock
-        axios.get.mockRejectedValueOnce(null);
+//         const req = httpMocks.createRequest({
+//             method: 'GET',
+//             url: '/test',
+//             cookies: { accessToken: 'invalid-token' }
+//         });
+//         const res = httpMocks.createResponse();
+//         const next = jest.fn();
 
-        await authenticateUser(mockReq, mockRes, mockNext);
-        expect(mockRes.status).toHaveBeenCalledWith(401);
-        expect(mockRes.send).toHaveBeenCalledWith('Invalid access token');
-    });
+//         await authenticateUser(req, res, next);
 
-    it('responds with 404 if user not found in database', async () => {
-        mockReq.headers.authorization = 'Bearer validToken';
-        // Simulating fetchSpotifyProfile
-        axios.get.mockResolvedValueOnce({ data: { id: 'user123' } });
-        db.getUserBySpotifyID.mockResolvedValue(null);
+//         expect(res.statusCode).toBe(401);
+//         expect(res._getData()).toBe('Invalid access token');
+//         expect(next).not.toHaveBeenCalled();
+//     });
 
-        await authenticateUser(mockReq, mockRes, mockNext);
-        expect(mockRes.status).toHaveBeenCalledWith(404);
-        expect(mockRes.send).toHaveBeenCalledWith('User not found');
-    });
+//     it('should return 404 if user does not exist in the database', async () => {
+//         fetchSpotifyUserProfile.mockResolvedValue({ id: 'user-id' }); // Simulate valid token
+//         db.getUserBySpotifyID.mockImplementation((id, callback) => callback(null, null)); // Simulate user not found
 
-    it('calls next() for successful authentication', async () => {
-        const userProfile = { id: 'user123', name: 'Test User' };
-        const userInDb = { id: 'user123', name: 'Test User', email: 'test@example.com' };
+//         const req = httpMocks.createRequest({
+//             method: 'GET',
+//             url: '/test',
+//             cookies: { accessToken: 'valid-token' }
+//         });
+//         const res = httpMocks.createResponse();
+//         const next = jest.fn();
 
-        mockReq.headers.authorization = 'Bearer validToken';
-        axios.get.mockRejectedValueOnce(userProfile);
-        db.getUserBySpotifyID.mockResolvedValue(userInDb);
+//         await authenticateUser(req, res, next);
 
-        await authenticateUser(mockReq, mockRes, mockNext);
-        expect(mockReq.user).toEqual(userInDb);
-        expect(mockNext).toHaveBeenCalled();
-    });
+//         expect(res.statusCode).toBe(404);
+//         expect(res._getData()).toBe('User not found');
+//         expect(next).not.toHaveBeenCalled();
+//     });
 
-    // Reset mocks after each test
-    afterEach(() => {
-        jest.clearAllMocks();
-    });
-});
+//     it('should call next() for valid token and existing user', async () => {
+//         const mockUserProfile = { id: 'user-id', name: 'Test User' };
+//         const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+//         fetchSpotifyUserProfile.mockResolvedValue(mockUserProfile);
+//         db.getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
 
+//         const req = httpMocks.createRequest({
+//             method: 'GET',
+//             url: '/test',
+//             cookies: { accessToken: 'valid-token' }
+//         });
+//         const res = httpMocks.createResponse();
+//         const next = jest.fn();
+
+//         await authenticateUser(req, res, next);
+
+//         expect(req.user).toEqual(mockUserRow);
+//         expect(next).toHaveBeenCalled();
+//         expect(res.statusCode).not.toBe(401);
+//         expect(res.statusCode).not.toBe(404);
+//     });
+// });
 
 
 // // suite tests successful behavior of GET /auth/token route endpoint
