@@ -46,6 +46,7 @@ function generateUniqueID() {
  * @return {Promise<Object|null>} The user profile object or null if the request fails.
  */
 async function fetchSpotifyUserProfile(accessToken) {
+    console.log("FETCHHHH");
     try {
         const response = await axios.get('https://api.spotify.com/v1/me', {
             headers: {
@@ -74,7 +75,6 @@ async function authenticateUser(req, res, next) {
 
     const accessToken = req.cookies.accessToken;
 
-    console.log("ACCESS TOKEN: " + accessToken);
     if (!accessToken) {
         return res.status(401).send('Access token required');
     }
@@ -88,6 +88,7 @@ async function authenticateUser(req, res, next) {
         }
 
         const user = await new Promise(function (resolve, reject) {
+            //console.log("HELLOOOOOOOOOO");
             db.getUserBySpotifyID(userProfile.id, function (err, row) {
                 if (err) {
                     console.error('Failed to retrieve user:', err);
@@ -104,6 +105,7 @@ async function authenticateUser(req, res, next) {
         req.user = user;
         next();
     } catch (error) {
+        console.log("ERROR: " + error);
         console.error('Authentication error:', error);
         if (error.message === 'User not found') {
             res.status(404).send('User not found');
@@ -147,6 +149,7 @@ app.get('/auth/login', function (req, res) {
  */
 app.get('/auth/callback', function (req, res) {
     var code = req.query.code;
+    let access_token;
 
     // configuration for POST request to Spotify's api/token endpoint -- exchanges authorization code for access token
     var authOptions = {
@@ -216,7 +219,6 @@ app.get('/auth/token', function (req, res) {
 
 // Endpoint to dynamically set backgroudn color of application based on primary color extracted from album art.
 app.get('/image-color', authenticateUser, async function (req, res) {
-    console.log("IMAGE COLOR ENDPOINT");
     const imageUrl = req.query.url;
     if (!imageUrl) {
         return res.status(400).send('No image URL provided');

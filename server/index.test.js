@@ -1,17 +1,17 @@
 const request = require('supertest');
 const { app, generateRandomString, fetchSpotifyUserProfile, authenticateUser } = require('./index');
-const axios = require('axios');
-const { db, getUserBySpotifyID } = require('../database/database');
 const httpMocks = require('node-mocks-http');
 
 
 jest.mock('axios');
+const axios = require('axios');
 
 jest.mock('../database/database', () => ({
-    db: {
-        getUserBySpotifyID: jest.fn(),
-    },
+    getUserBySpotifyID: jest.fn(),
+    createUserAfterSpotifyAuth: jest.fn(),
 }));
+const { getUserBySpotifyID, createUserAfterSpotifyAuth } = require('../database/database');
+
 
 // Tests generateRandomString function
 describe('generateRandomString', function () {
@@ -37,29 +37,9 @@ describe('generateRandomString', function () {
     });
 });
 
-// Tests GET /auth/login route endpoint
-describe('GET /auth/login', function () {
-    it('redirects to Spotify authorization URL', function (done) {
-        request(app)
-            .get('/auth/login')
-            .expect(302) // Expecting HTTP status code 302 for redirection
-            .end(function (err, res) {
-                // Verify the Location header contains the correct Spotify auth URL
-                const receivedLocation = res.headers.location;
-                expect(receivedLocation.startsWith('https://accounts.spotify.com/authorize/?')).toBe(true);
-                expect(receivedLocation).toContain('response_type=code');
-                expect(receivedLocation).toContain('client_id=');
-                expect(receivedLocation).toContain('scope=streaming+user-read-email+user-read-private');
-                expect(receivedLocation).toContain('redirect_uri=');
-                expect(receivedLocation).toContain('state=');
-
-                done(err);
-            });
-    });
-});
-
 // Tests fetchSpotifyUserProfile
 describe('fetchSpotifyUserProfile', () => {
+
     it('returns user profile data when the fetch is successful', async function () {
         // Mock successful response
         const mockUserProfile = { id: 'user1', name: 'Test User' };
@@ -85,126 +65,191 @@ describe('fetchSpotifyUserProfile', () => {
     });
 });
 
-
 // Tests authenticateUser
-// describe('authenticateUser Middleware', () => {
-//     it('should return 401 if no access token is provided', async () => {
-//         const req = httpMocks.createRequest({
-//             method: 'GET',
-//             url: '/test',
-//             cookies: {}
-//         });
-//         const res = httpMocks.createResponse();
-//         const next = jest.fn();
+describe('authenticateUser Middleware', () => {
 
-//         await authenticateUser(req, res, next);
+    afterEach(() => {
+        jest.clearAllMocks(); // Clear mocks to avoid interference
+    });
 
-//         expect(res.statusCode).toBe(401);
-//         expect(res._getData()).toBe('Access token required');
-//         expect(next).not.toHaveBeenCalled();
-//     });
+    it('should return 401 if no access token is provided', async () => {
+        const req = httpMocks.createRequest({
+            method: 'GET',
+            url: '/test',
+            cookies: {}
+        });
+        const res = httpMocks.createResponse();
+        const next = jest.fn();
 
-//     it('should return 401 if the access token is invalid', async () => {
-//         fetchSpotifyUserProfile.mockResolvedValue(null); // Simulate invalid token
+        await authenticateUser(req, res, next);
 
-//         const req = httpMocks.createRequest({
-//             method: 'GET',
-//             url: '/test',
-//             cookies: { accessToken: 'invalid-token' }
-//         });
-//         const res = httpMocks.createResponse();
-//         const next = jest.fn();
+        expect(res.statusCode).toBe(401);
+        expect(res._getData()).toBe('Access token required');
+        expect(next).not.toHaveBeenCalled();
+    });
 
-//         await authenticateUser(req, res, next);
+    it('should return 401 if the access token is invalid', async () => {
+        axios.get.mockResolvedValue(null);
 
-//         expect(res.statusCode).toBe(401);
-//         expect(res._getData()).toBe('Invalid access token');
-//         expect(next).not.toHaveBeenCalled();
-//     });
+        const req = httpMocks.createRequest({
+            method: 'GET',
+            url: '/test',
+            cookies: { accessToken: 'invalid-token' }
+        });
+        const res = httpMocks.createResponse();
+        const next = jest.fn();
 
-//     it('should return 404 if user does not exist in the database', async () => {
-//         fetchSpotifyUserProfile.mockResolvedValue({ id: 'user-id' }); // Simulate valid token
-//         db.getUserBySpotifyID.mockImplementation((id, callback) => callback(null, null)); // Simulate user not found
+        await authenticateUser(req, res, next);
 
-//         const req = httpMocks.createRequest({
-//             method: 'GET',
-//             url: '/test',
-//             cookies: { accessToken: 'valid-token' }
-//         });
-//         const res = httpMocks.createResponse();
-//         const next = jest.fn();
+        expect(res.statusCode).toBe(401);
+        expect(res._getData()).toBe('Invalid access token');
+        expect(next).not.toHaveBeenCalled();
+    });
 
-//         await authenticateUser(req, res, next);
+    it('should return 404 if user does not exist in the database', async () => {
+        axios.get.mockResolvedValue({
+            data: { id: 'user-id' } // Mocked response data for axios
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, null)); // Simulate user not found
 
-//         expect(res.statusCode).toBe(404);
-//         expect(res._getData()).toBe('User not found');
-//         expect(next).not.toHaveBeenCalled();
-//     });
+        const req = httpMocks.createRequest({
+            method: 'GET',
+            url: '/test',
+            cookies: { accessToken: 'valid-token' }
+        });
+        const res = httpMocks.createResponse();
+        const next = jest.fn();
 
-//     it('should call next() for valid token and existing user', async () => {
-//         const mockUserProfile = { id: 'user-id', name: 'Test User' };
-//         const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
-//         fetchSpotifyUserProfile.mockResolvedValue(mockUserProfile);
-//         db.getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
+        await authenticateUser(req, res, next);
 
-//         const req = httpMocks.createRequest({
-//             method: 'GET',
-//             url: '/test',
-//             cookies: { accessToken: 'valid-token' }
-//         });
-//         const res = httpMocks.createResponse();
-//         const next = jest.fn();
+        expect(res.statusCode).toBe(404);
+        expect(res._getData()).toBe('User not found');
+        expect(next).not.toHaveBeenCalled();
+    });
 
-//         await authenticateUser(req, res, next);
+    it('should call next() for valid token and existing user', async () => {
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
+        const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+        axios.get.mockResolvedValue({
+            data: mockUserProfile // Mocked response data for axios
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
 
-//         expect(req.user).toEqual(mockUserRow);
-//         expect(next).toHaveBeenCalled();
-//         expect(res.statusCode).not.toBe(401);
-//         expect(res.statusCode).not.toBe(404);
-//     });
-// });
+        const req = httpMocks.createRequest({
+            method: 'GET',
+            url: '/test',
+            cookies: { accessToken: 'valid-token' }
+        });
+        const res = httpMocks.createResponse();
+        const next = jest.fn();
 
+        await authenticateUser(req, res, next);
 
-// // suite tests successful behavior of GET /auth/token route endpoint
-// describe('GET /auth/token', () => {
-//     beforeEach(() => {
-//         // Mock successful axios HTTP request for this suite
-//         axios.post.mockResolvedValue({
-//             status: 200,
-//             data: { access_token: 'mocked_token' }
-//         });
-//     });
+        expect(req.user).toEqual(mockUserRow);
+        expect(next).toHaveBeenCalled();
+        expect(res.statusCode).not.toBe(401);
+        expect(res.statusCode).not.toBe(404);
+    });
 
-//     it('returns an access token', async () => {
-//         const response = await request(app).get('/auth/token');
-//         expect(response.statusCode).toBe(200);
-//         expect(response.body).toEqual({ access_token: expect.any(String) });
-//     });
+    afterEach(() => {
+        jest.clearAllMocks(); // Clear mocks to avoid interference
+    });
+});
 
-//     afterEach(() => {
-//         axios.post.mockReset(); // Reset the mock after each test
-//     });
-// });
+// Tests GET /auth/login route endpoint
+describe('GET /auth/login', function () {
+    it('redirects to Spotify authorization URL', function (done) {
+        request(app)
+            .get('/auth/login')
+            .expect(302) // Expecting HTTP status code 302 for redirection
+            .end(function (err, res) {
+                // Verify the Location header contains the correct Spotify auth URL
+                const receivedLocation = res.headers.location;
+                expect(receivedLocation.startsWith('https://accounts.spotify.com/authorize/?')).toBe(true);
+                expect(receivedLocation).toContain('response_type=code');
+                expect(receivedLocation).toContain('client_id=');
+                expect(receivedLocation).toContain('scope=streaming+user-read-email+user-read-private');
+                expect(receivedLocation).toContain('redirect_uri=');
+                expect(receivedLocation).toContain('state=');
 
-// // suite tests unsuccessful behavior of GET /auth/token route endpoint
-// describe('GET /auth/callback error handling', () => {
-//     beforeEach(() => {
-//         // Mock unsuccessful axios HTTP request for this suite
-//         axios.post.mockRejectedValue({
-//             response: {
-//                 status: 400,
-//                 data: { error: 'Bad Request' }
-//             }
-//         });
-//     });
+                done(err);
+            });
+    });
+});
 
-//     it('responds with 500 on authentication error', async () => {
-//         const response = await request(app).get('/auth/callback?code=someInvalidCode');
-//         expect(response.statusCode).toBe(500);
-//         expect(response.text).toContain('Authentication error');
-//     });
+// Tests GET /auth/callback
+describe('/auth/callback endpoint', () => {
+    it('should exchange code for an access token and fetch user profile', async () => {
+        const mockAccessToken = 'mock_access_token';
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
 
-//     afterEach(() => {
-//         axios.post.mockReset(); // Reset the mock after each test
-//     });
-// });
+        // Mocking axios for token exchange
+        axios.mockResolvedValueOnce({
+            data: { access_token: 'mock_access_token' }, // Mocked response for token exchange
+            status: 200
+        });
+
+        // Mocking axios for fetching Spotify profile
+        axios.get.mockResolvedValueOnce({
+            data: mockUserProfile // Mocked response data for axios profile fetch
+        });
+
+        // Mocking database createUserAfterSpotifyAuth function
+        createUserAfterSpotifyAuth.mockImplementation((spotifyProfile, callback) => {
+            callback(null, { id: spotifyProfile.id });
+        });
+
+        const response = await request(app).get('/auth/callback?code=valid_code');
+
+        expect(response.status).toBe(302); // Expect to be redirected
+        expect(response.headers['set-cookie']).toEqual(expect.arrayContaining([
+            expect.stringContaining('accessToken=' + mockAccessToken)
+        ]));
+    });
+
+    it('should handle failure to exchange token', async () => {
+        // Mocking axios to simulate failure in token exchange
+        axios.mockRejectedValueOnce(new Error('Failed to obtain access token'));
+
+        const response = await request(app).get('/auth/callback?code=invalid_code');
+
+        expect(response.status).toBe(500);
+        expect(response.text).toBe('Authentication error');
+    });
+
+    it('should handle failure to create a user in the database', async () => {
+        const mockAccessToken = 'mock_access_token';
+
+        // Mock axios to simulate successful token exchange
+        axios.mockResolvedValueOnce({
+            status: 200,
+            data: { access_token: mockAccessToken }
+        });
+
+        // Mock axios for profile fetching
+        axios.mockResolvedValueOnce({
+            status: 200,
+            data: { id: 'spotify_user_id' }
+        });
+
+        // Mocking database createUserAfterSpotifyAuth function to simulate failure
+        createUserAfterSpotifyAuth.mockImplementation((spotifyProfile, callback) => {
+            callback(new Error('Failed to create user'), null);
+        });
+
+        const response = await request(app).get('/auth/callback?code=valid_code');
+
+        expect(response.status).toBe(500);
+        expect(response.text).toBe('Authentication error');
+    });
+
+    // Additional test cases can be added here, such as:
+    // - Testing what happens if the Spotify profile fetch fails
+    // - Testing behavior with different response statuses from Spotify's token endpoint
+    // - Testing edge cases and exception handling
+});
+
+// Make sure to reset the mocks after each test if needed
+afterEach(() => {
+    jest.resetAllMocks();
+});
