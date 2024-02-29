@@ -1,16 +1,19 @@
 const request = require('supertest');
-const { app, generateRandomString, fetchSpotifyUserProfile, authenticateUser } = require('./index');
+const app = require('./index');
 const httpMocks = require('node-mocks-http');
-
 
 jest.mock('axios');
 const axios = require('axios');
 
+const { generateRandomString } = require('./utils/utilityFunctions');
+const { authenticateUser, fetchSpotifyUserProfile } = require('./middlewares/authenticateUser');
+
 jest.mock('../database/database', () => ({
     getUserBySpotifyID: jest.fn(),
     createUserAfterSpotifyAuth: jest.fn(),
+    addTrack: jest.fn(),
 }));
-const { getUserBySpotifyID, createUserAfterSpotifyAuth } = require('../database/database');
+const { getUserBySpotifyID, createUserAfterSpotifyAuth, addTrack } = require('../database/database');
 
 
 // Tests generateRandomString function
@@ -177,7 +180,7 @@ describe('GET /auth/login', function () {
     });
 });
 
-// Tests GET /auth/callback
+// // Tests GET /auth/callback endpoint
 describe('/auth/callback endpoint', () => {
     it('should exchange code for an access token and fetch user profile', async () => {
         const mockAccessToken = 'mock_access_token';
@@ -243,13 +246,143 @@ describe('/auth/callback endpoint', () => {
         expect(response.text).toBe('Authentication error');
     });
 
-    // Additional test cases can be added here, such as:
-    // - Testing what happens if the Spotify profile fetch fails
-    // - Testing behavior with different response statuses from Spotify's token endpoint
-    // - Testing edge cases and exception handling
+    it('should handle failure to fetch Spotify profile', async () => {
+        const mockAccessToken = 'mock_access_token';
+
+        // Mock axios to simulate successful token exchange
+        axios.mockResolvedValueOnce({
+            status: 200,
+            data: { access_token: mockAccessToken }
+        });
+
+        // Mock axios for profile fetching to simulate failure
+        axios.get.mockRejectedValueOnce(new Error('Failed to fetch Spotify profile'));
+
+        const response = await request(app).get('/auth/callback?code=valid_code');
+
+        expect(response.status).toBe(500);
+        expect(response.text).toBe('Authentication error');
+    });
+
+    it('should handle non-200 response status from Spotify token endpoint', async () => {
+        // Mock axios to simulate non-200 response from token exchange
+        axios.mockResolvedValueOnce({
+            status: 400,
+            data: { error: 'invalid_grant', error_description: 'Invalid authorization code' }
+        });
+
+        const response = await request(app).get('/auth/callback?code=expired_code');
+
+        expect(response.status).toBe(500);
+        expect(response.text).toBe('Authentication error');
+    });
+
+    it('should handle missing authorization code in the request', async () => {
+        const response = await request(app).get('/auth/callback'); // No code query parameter
+
+        expect(response.status).toBe(500);
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
 });
 
-// Make sure to reset the mocks after each test if needed
-afterEach(() => {
-    jest.resetAllMocks();
-});
+// Tests POST /auth/callback endpoint
+//describe('/track endpoint', () => {
+// it('should add a track for an authenticated user', async () => {
+//     // Mock `authenticateUser` middleware to simulate a successful authentication
+//     jest.mock('./index', () => (req, res, next) => {
+//         req.user = { id: 'user-id', name: 'Test User' }; // Simulate attaching user to request
+//         next();
+//     });
+
+//     // Mock `db.addTrack` to simulate a successful adding of track to database
+//     addTrack.mockImplementation((trackData, callback) => {
+//         callback(null); // No error
+//     });
+
+//     const response = await request(app)
+//         .post('/track')
+//         .set('Cookie', ['accessToken=valid-token']) // Simulate a valid access token cookie
+//         .send({
+//             spotifyTrackID: '12345',
+//             title: 'Test Track',
+//             artist: 'Test Artist',
+//             album: 'Test Album'
+//         });
+
+//     expect(response.status).toBe(201);
+//     expect(response.text).toBe('Track added');
+//     expect(addTrack).toHaveBeenCalledWith(expect.objectContaining({
+//         spotifyTrackID: '12345',
+//         title: 'Test Track',
+//         artist: 'Test Artist',
+//         album: 'Test Album'
+//     }), expect.any(Function));
+// });
+
+// it('should add a track for an authenticated user', async () => {
+//     // Mock `db.addTrack` to simulate a successful adding of track to database
+//     addTrack.mockImplementation((trackData, callback) => {
+//         callback(null); // No error
+//     });
+
+//     // Assuming `db.addTrack` is correctly mocked elsewhere in your setup
+//     const trackPayload = {
+//         spotifyTrackID: '12345',
+//         title: 'Test Track',
+//         artist: 'Test Artist',
+//         album: 'Test Album'
+//     };
+
+//     const response = await request(app)
+//         .post('/track')
+//         // Simulate authentication by directly manipulating the request, or by using a test-specific middleware setup
+//         .send(trackPayload)
+//         .set('Authorization', `Bearer valid-token`); // Example of setting headers, adjust based on actual auth logic
+
+//     expect(response.status).toBe(201);
+//     expect(response.text).toBe('Track added');
+// });
+
+
+
+// it('should respond with an error if adding the track fails', async () => {
+//     // Setup
+//     addTrack.mockImplementation((trackInfo, callback) => callback(new Error('Database error')));
+
+//     // Execute
+//     const response = await request(app).post('/track').send({
+//         spotifyTrackID: '12345',
+//         title: 'Test Track',
+//         artist: 'Test Artist',
+//         album: 'Test Album',
+//     });
+
+//     // Assert
+//     expect(response.status).toBe(500);
+//     expect(response.text).toBe('Failed to add track');
+// });
+
+// it('should reject unauthenticated requests', async () => {
+//     // Modify the authenticateUser mock for this test to simulate authentication failure
+//     jest.mock('../path/to/authenticateUser', () => (req, res, next) => {
+//         res.sendStatus(401); // Send Unauthorized status
+//     });
+
+//     // Execute
+//     const response = await request(app).post('/track').send({
+//         spotifyTrackID: '67890',
+//         title: 'Another Test Track',
+//         artist: 'Another Test Artist',
+//         album: 'Another Test Album',
+//     });
+
+//     // Assert
+//     expect(response.status).toBe(401);
+// });
+//     afterEach(() => {
+//         jest.resetAllMocks();
+//     });
+// });
