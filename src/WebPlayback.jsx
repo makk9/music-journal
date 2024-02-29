@@ -97,7 +97,7 @@ function WebPlayback(props) {
   useEffect(() => {
     if (current_track && current_track.album && current_track.album.images.length > 0) {
       const imageUrl = current_track.album.images[0].url;
-      fetch(`/image-color?url=${encodeURIComponent(imageUrl)}`)
+      fetch(`/background?url=${encodeURIComponent(imageUrl)}`)
         .then((res) => res.json())
         .then(({ r, g, b }) => {
           const color = `rgba(${r}, ${g}, ${b}, 0.5)`; // Using a 50% opacity
