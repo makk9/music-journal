@@ -12,9 +12,16 @@ jest.mock('../database/database', () => ({
     getUserBySpotifyID: jest.fn(),
     createUserAfterSpotifyAuth: jest.fn(),
     addTrack: jest.fn(),
+    addJournalEntry: jest.fn(),
+    getJournalEntriesByTrackID: jest.fn(),
+    updateJournalEntry: jest.fn(),
+    deleteJournalEntry: jest.fn(),
 }));
-const { getUserBySpotifyID, createUserAfterSpotifyAuth, addTrack } = require('../database/database');
+const { getUserBySpotifyID, createUserAfterSpotifyAuth, addTrack, addJournalEntry, getJournalEntriesByTrackID,
+    updateJournalEntry, deleteJournalEntry } = require('../database/database');
 
+
+// TESTING UTILITY FUNCTIONS 
 
 // Tests generateRandomString function
 describe('generateRandomString', function () {
@@ -39,6 +46,9 @@ describe('generateRandomString', function () {
         expect(str1).not.toEqual(str2);
     });
 });
+
+
+// TESTING MIDDLEWARE
 
 // Tests fetchSpotifyUserProfile
 describe('fetchSpotifyUserProfile', () => {
@@ -159,6 +169,8 @@ describe('authenticateUser Middleware', () => {
     });
 });
 
+// TESTING ROUTES
+
 // Tests GET /auth/login route endpoint
 describe('GET /auth/login', function () {
     it('redirects to Spotify authorization URL', function (done) {
@@ -180,8 +192,8 @@ describe('GET /auth/login', function () {
     });
 });
 
-// // Tests GET /auth/callback endpoint
-describe('/auth/callback endpoint', () => {
+// Tests GET /auth/callback endpoint
+describe('GET /auth/callback endpoint', () => {
     it('should exchange code for an access token and fetch user profile', async () => {
         const mockAccessToken = 'mock_access_token';
         const mockUserProfile = { id: 'user-id', name: 'Test User' };
@@ -288,101 +300,466 @@ describe('/auth/callback endpoint', () => {
     });
 });
 
-// Tests POST /auth/callback endpoint
-//describe('/track endpoint', () => {
-// it('should add a track for an authenticated user', async () => {
-//     // Mock `authenticateUser` middleware to simulate a successful authentication
-//     jest.mock('./index', () => (req, res, next) => {
-//         req.user = { id: 'user-id', name: 'Test User' }; // Simulate attaching user to request
-//         next();
-//     });
+// Tests POST /track endpoint
+describe('POST /track endpoint', () => {
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
 
-//     // Mock `db.addTrack` to simulate a successful adding of track to database
-//     addTrack.mockImplementation((trackData, callback) => {
-//         callback(null); // No error
-//     });
+    it('successfully adds a track for an authenticated user', async () => {
 
-//     const response = await request(app)
-//         .post('/track')
-//         .set('Cookie', ['accessToken=valid-token']) // Simulate a valid access token cookie
-//         .send({
-//             spotifyTrackID: '12345',
-//             title: 'Test Track',
-//             artist: 'Test Artist',
-//             album: 'Test Album'
-//         });
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
+        const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+        axios.get.mockResolvedValue({
+            data: mockUserProfile // Mocked response data for axios found in 'fetchSpotifyProfile'
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
 
-//     expect(response.status).toBe(201);
-//     expect(response.text).toBe('Track added');
-//     expect(addTrack).toHaveBeenCalledWith(expect.objectContaining({
-//         spotifyTrackID: '12345',
-//         title: 'Test Track',
-//         artist: 'Test Artist',
-//         album: 'Test Album'
-//     }), expect.any(Function));
-// });
+        // Mock successful track addition in the database
+        addTrack.mockImplementation((track, callback) => {
+            // Simulate a successful database operation by calling the callback with null error and the trackID
+            callback(null, track.trackID);
+        });
 
-// it('should add a track for an authenticated user', async () => {
-//     // Mock `db.addTrack` to simulate a successful adding of track to database
-//     addTrack.mockImplementation((trackData, callback) => {
-//         callback(null); // No error
-//     });
+        const trackData = {
+            spotifyTrackID: '123',
+            title: 'Test Track',
+            artist: 'Test Artist',
+            album: 'Test Album'
+        };
 
-//     // Assuming `db.addTrack` is correctly mocked elsewhere in your setup
-//     const trackPayload = {
-//         spotifyTrackID: '12345',
-//         title: 'Test Track',
-//         artist: 'Test Artist',
-//         album: 'Test Album'
-//     };
+        const response = await request(app)
+            .post('/track')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(trackData)
+            .expect(201); // Expecting HTTP status code 201 for successful creation
+    });
 
-//     const response = await request(app)
-//         .post('/track')
-//         // Simulate authentication by directly manipulating the request, or by using a test-specific middleware setup
-//         .send(trackPayload)
-//         .set('Authorization', `Bearer valid-token`); // Example of setting headers, adjust based on actual auth logic
+    it('returns an error when addTrack fails', async () => {
 
-//     expect(response.status).toBe(201);
-//     expect(response.text).toBe('Track added');
-// });
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
+        const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+        axios.get.mockResolvedValue({
+            data: mockUserProfile
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
+
+        // Mock unsuccessful track addition in the database
+        addTrack.mockImplementation((track, callback) => {
+            const error = new Error('Failed to add track to database');
+            callback(error, null);
+        });
+
+        const trackData = {
+            spotifyTrackID: '123',
+            title: 'Test Track',
+            artist: 'Test Artist',
+            album: 'Test Album'
+        };
+
+        const response = await request(app)
+            .post('/track')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(trackData)
+            .expect(500); // Expecting HTTP status code 500 for unsuccessful creation
+    });
+
+    it('returns an error when authentication fails', async () => {
+        axios.get.mockRejectedValueOnce(new Error('Failed to authenticate'));
+
+        // Mock successful track addition in the database
+        addTrack.mockImplementation((track, callback) => {
+            // Simulate a successful database operation by calling the callback with null error and the trackID
+            callback(null, track.trackID);
+        });
+
+        const trackData = {
+            spotifyTrackID: '123',
+            title: 'Test Track',
+            artist: 'Test Artist',
+            album: 'Test Album'
+        };
+
+        const response = await request(app)
+            .post('/track')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(trackData)
+            .expect(401); // Expecting HTTP status code 401 for authentication failure
+    });
+});
+
+// Tests POST /journal endpoint
+describe('POST /journal endpoint', () => {
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('successfully adds a journal entry for an authenticated user', async () => {
+
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
+        const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+        axios.get.mockResolvedValue({
+            data: mockUserProfile // Mocked response data for axios found in 'fetchSpotifyProfile'
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
+
+        // Mock successful journal addition in the database
+        addJournalEntry.mockImplementation((journalData, callback) => {
+            // Simulate a successful database operation by calling the callback with null error and the entryID
+            callback(null, journalData.entryID);
+        });
+
+        const journalData = {
+            entryID: 'testEntry1',
+            userID: 'testUser1',
+            trackID: 'testTrack1',
+            entryText: 'This song reminds me of summer...',
+            imageURL: 'http://Batman.jpg',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        const response = await request(app)
+            .post('/journal')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(journalData)
+            .expect(201); // Expecting HTTP status code 201 for successful creation
+    });
+
+    it('returns an error when addJournalEntry fails', async () => {
+
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
+        const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+        axios.get.mockResolvedValue({
+            data: mockUserProfile
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
+
+        // Mock unsuccessful journal addition in the database
+        addJournalEntry.mockImplementation((journalData, callback) => {
+            // Simulate a unsuccessful database operation by calling the callback with error
+            const error = new Error('Failed to add journal entry to database');
+            callback(error, null);
+        });
+
+        const journalData = {
+            entryID: 'testEntry1',
+            userID: 'testUser1',
+            trackID: 'testTrack1',
+            entryText: 'This song reminds me of summer...',
+            imageURL: 'http://Batman.jpg',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        const response = await request(app)
+            .post('/journal')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(journalData)
+            .expect(500); // Expecting HTTP status code 500 for unsuccessful creation
+    });
+
+    it('returns an error when authentication fails', async () => {
+        axios.get.mockRejectedValueOnce(new Error('Failed to authenticate'));
+
+        // Mock successful journal addition in the database
+        addJournalEntry.mockImplementation((journalData, callback) => {
+            // Simulate a successful database operation by calling the callback with null error and the entryID
+            callback(null, journalData.entryID);
+        });
+
+        const journalData = {
+            entryID: 'testEntry1',
+            userID: 'testUser1',
+            trackID: 'testTrack1',
+            entryText: 'This song reminds me of summer...',
+            imageURL: 'http://Batman.jpg',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        const response = await request(app)
+            .post('/track')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(journalData)
+            .expect(401); // Expecting HTTP status code 401 for authentication failure
+    });
+});
+
+
+// Tests GET /journal/:trackId endpoint
+describe('GET /journal/:trackId endpoint', () => {
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('successfully gets a journal entry by track for an authenticated user', async () => {
+
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
+        const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+        axios.get.mockResolvedValue({
+            data: mockUserProfile // Mocked response data for axios found in 'fetchSpotifyProfile'
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
+
+        const mockEntries = [{ id: 'entry1', text: 'Loved this track!', trackId: 'testTrack1', userId: 'testUser1' }];
+        // Mock successful journal retrieval in the database
+        getJournalEntriesByTrackID.mockImplementation((trackID, userID, callback) => {
+            // Simulate a successful database operation by calling the callback with null error and entries
+            callback(null, mockEntries);
+        });
+
+        const getJournalData = {
+            trackID: 'testTrack1',
+            userID: 'testUser1'
+        };
+
+        const response = await request(app)
+            .get('/journal/:testTrack1')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(getJournalData)
+            .expect(200); // Expecting HTTP status code 200 for successful retrieval
+
+        expect(response.body).toEqual(mockEntries);
+    });
+
+    it('returns an error when getJournalEntriesByTrackID fails', async () => {
+
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
+        const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+        axios.get.mockResolvedValue({
+            data: mockUserProfile // Mocked response data for axios found in 'fetchSpotifyProfile'
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
+
+        const mockEntries = [{ id: 'entry1', text: 'Loved this track!', trackId: 'testTrack1', userId: 'testUser1' }];
+        // Mock unsuccessful journal retrieval in the database
+        getJournalEntriesByTrackID.mockImplementation((trackID, userID, callback) => {
+            // Simulate a unsuccessful database operation by calling the callback with error
+            const error = new Error('Failed to get journal entry from database');
+            callback(error, null);
+        });
+
+        const getJournalData = {
+            trackID: 'testTrack1',
+            userID: 'testUser1'
+        };
+
+        const response = await request(app)
+            .get('/journal/:testTrack1')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(getJournalData)
+            .expect(500); // Expecting HTTP status code 200 for unsuccessful retrieval
+
+        expect(response.body).toEqual({});
+    });
+});
+
+it('returns an error when authentication fails', async () => {
+
+    axios.get.mockRejectedValueOnce(new Error('Failed to authenticate'));
+
+    // Mock successful journal retrieval in the database
+    getJournalEntriesByTrackID.mockImplementation((trackID, userID, callback) => {
+        // Simulate a successful database operation by calling the callback with null error and entries
+        const error = new Error('Failed to get journal entry from database');
+        callback(error, null);
+    });
+
+    const getJournalData = {
+        trackID: 'testTrack1',
+        userID: 'testUser1'
+    };
+
+    const response = await request(app)
+        .get('/journal/:testTrack1')
+        .set('Cookie', [`accessToken=valid_mock_access_token`])
+        .send(getJournalData)
+        .expect(401); // Expecting HTTP status code 401 for authentication failure
+
+    expect(response.body).toEqual({});
+});
+
+
+// Tests PUT /journal/:entryID endpoint
+describe('PUT /journal/:entryId endpoint', () => {
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('successfully updates journal entry for an authenticated user', async () => {
+
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
+        const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+        axios.get.mockResolvedValue({
+            data: mockUserProfile // Mocked response data for axios found in 'fetchSpotifyProfile'
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
+
+        // Mock successful journal update in the database
+        updateJournalEntry.mockImplementation((entryID, userID, data, callback) => {
+            callback(null);
+        });
+
+        const updateJournalData = {
+            entryID: 'testEntry1',
+            userID: 'testUser1',
+            entryText: 'Hello',
+            imageURL: null,
+            updatedAt: new Date().toISOString()
+        };
+
+        const response = await request(app)
+            .put('/journal/:testEntry1')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(updateJournalData)
+            .expect(200); // Expecting HTTP status code 200 for successful update
+
+        expect(response.text).toBe('Journal entry updated');
+    });
+
+    it('returns an error when updateJournalEntry fails', async () => {
+
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
+        const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+        axios.get.mockResolvedValue({
+            data: mockUserProfile // Mocked response data for axios found in 'fetchSpotifyProfile'
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
+
+        // Mock unsuccessful journal update in the database
+        updateJournalEntry.mockImplementation((entryID, userID, data, callback) => {
+            callback(new Error('Failed to update journal entry'));
+        });
+
+        const updateJournalData = {
+            entryID: 'testEntry1',
+            userID: 'testUser1',
+            entryText: 'Hello',
+            imageURL: null,
+            updatedAt: new Date().toISOString()
+        };
+
+        const response = await request(app)
+            .put('/journal/:testTrack1')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(updateJournalData)
+            .expect(500); // Expecting HTTP status code 200 for unsuccessful retrieval
+
+        expect(response.text).toContain('Failed to update journal entry');
+    });
+
+    it('returns an error when authentication fails', async () => {
+
+        axios.get.mockRejectedValueOnce(new Error('Failed to authenticate'));
+
+        // Mock successful journal update in the database
+        updateJournalEntry.mockImplementation((entryID, userID, data, callback) => {
+            callback(null);
+        });
+
+        const updateJournalData = {
+            entryID: 'testEntry1',
+            userID: 'testUser1',
+            entryText: 'Hello',
+            imageURL: null,
+            updatedAt: new Date().toISOString()
+        };
+
+
+        const response = await request(app)
+            .put('/journal/:testTrack1')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(updateJournalData)
+            .expect(401); // Expecting HTTP status code 401 for authentication failure
+    });
+});
+
+
+// Tests DELETE /journal/:entryID endpoint
+describe('DELETE /journal/:entryId endpoint', () => {
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('successfully deletes journal entry for an authenticated user', async () => {
+
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
+        const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+        axios.get.mockResolvedValue({
+            data: mockUserProfile // Mocked response data for axios found in 'fetchSpotifyProfile'
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
+
+        // Mock successful journal deletion from the database
+        deleteJournalEntry.mockImplementation((entryID, userID, callback) => {
+            callback(null);
+        });
+
+        const deleteJournalData = {
+            entryID: 'testEntry1',
+            userID: 'testUser1'
+        };
+
+        const response = await request(app)
+            .delete('/journal/:testEntry1')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(deleteJournalData)
+            .expect(200); // Expecting HTTP status code 200 for successful deletion
+
+        expect(response.text).toBe('Journal entry deleted');
+    });
+
+    it('returns an error when deleteJournalEntry fails', async () => {
+
+        const mockUserProfile = { id: 'user-id', name: 'Test User' };
+        const mockUserRow = { id: 'user-id', name: 'Test User', spotifyId: 'user-id' };
+        axios.get.mockResolvedValue({
+            data: mockUserProfile // Mocked response data for axios found in 'fetchSpotifyProfile'
+        });
+        getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
+
+        // Mock unsuccessful journal deletion from the database
+        deleteJournalEntry.mockImplementation((entryID, userID, callback) => {
+            callback(new Error('Failed to delete journal entry'));
+        });
+
+        const deleteJournalData = {
+            entryID: 'testEntry1',
+            userID: 'testUser1'
+        };
+
+        const response = await request(app)
+            .delete('/journal/:testTrack1')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(deleteJournalData)
+            .expect(500); // Expecting HTTP status code 200 for unsuccessful deletion
+
+        expect(response.text).toContain('Failed to delete journal entry');
+    });
+
+    it('returns an error when authentication fails', async () => {
+
+        axios.get.mockRejectedValueOnce(new Error('Failed to authenticate'));
+
+        // Mock successful journal deletion from the database
+        deleteJournalEntry.mockImplementation((entryID, userID, callback) => {
+            callback(null);
+        });
+
+        const deleteJournalData = {
+            entryID: 'testEntry1',
+            userID: 'testUser1'
+        };
+
+
+        const response = await request(app)
+            .delete('/journal/:testTrack1')
+            .set('Cookie', [`accessToken=valid_mock_access_token`])
+            .send(deleteJournalData)
+            .expect(401); // Expecting HTTP status code 401 for authentication failure
+    });
+});
 
 
 
-// it('should respond with an error if adding the track fails', async () => {
-//     // Setup
-//     addTrack.mockImplementation((trackInfo, callback) => callback(new Error('Database error')));
-
-//     // Execute
-//     const response = await request(app).post('/track').send({
-//         spotifyTrackID: '12345',
-//         title: 'Test Track',
-//         artist: 'Test Artist',
-//         album: 'Test Album',
-//     });
-
-//     // Assert
-//     expect(response.status).toBe(500);
-//     expect(response.text).toBe('Failed to add track');
-// });
-
-// it('should reject unauthenticated requests', async () => {
-//     // Modify the authenticateUser mock for this test to simulate authentication failure
-//     jest.mock('../path/to/authenticateUser', () => (req, res, next) => {
-//         res.sendStatus(401); // Send Unauthorized status
-//     });
-
-//     // Execute
-//     const response = await request(app).post('/track').send({
-//         spotifyTrackID: '67890',
-//         title: 'Another Test Track',
-//         artist: 'Another Test Artist',
-//         album: 'Another Test Album',
-//     });
-
-//     // Assert
-//     expect(response.status).toBe(401);
-// });
-//     afterEach(() => {
-//         jest.resetAllMocks();
-//     });
-// });
