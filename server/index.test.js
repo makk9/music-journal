@@ -328,7 +328,7 @@ describe('POST /track endpoint', () => {
             album: 'Test Album'
         };
 
-        const response = await request(app)
+        await request(app)
             .post('/track')
             .set('Cookie', [`accessToken=valid_mock_access_token`])
             .send(trackData)
@@ -357,7 +357,7 @@ describe('POST /track endpoint', () => {
             album: 'Test Album'
         };
 
-        const response = await request(app)
+        await request(app)
             .post('/track')
             .set('Cookie', [`accessToken=valid_mock_access_token`])
             .send(trackData)
@@ -380,7 +380,7 @@ describe('POST /track endpoint', () => {
             album: 'Test Album'
         };
 
-        const response = await request(app)
+        await request(app)
             .post('/track')
             .set('Cookie', [`accessToken=valid_mock_access_token`])
             .send(trackData)
@@ -419,7 +419,7 @@ describe('POST /journal endpoint', () => {
             updatedAt: new Date().toISOString()
         };
 
-        const response = await request(app)
+        await request(app)
             .post('/journal')
             .set('Cookie', [`accessToken=valid_mock_access_token`])
             .send(journalData)
@@ -452,7 +452,7 @@ describe('POST /journal endpoint', () => {
             updatedAt: new Date().toISOString()
         };
 
-        const response = await request(app)
+        await request(app)
             .post('/journal')
             .set('Cookie', [`accessToken=valid_mock_access_token`])
             .send(journalData)
@@ -478,7 +478,7 @@ describe('POST /journal endpoint', () => {
             updatedAt: new Date().toISOString()
         };
 
-        const response = await request(app)
+        await request(app)
             .post('/track')
             .set('Cookie', [`accessToken=valid_mock_access_token`])
             .send(journalData)
@@ -532,7 +532,6 @@ describe('GET /journal/:trackId endpoint', () => {
         });
         getUserBySpotifyID.mockImplementation((id, callback) => callback(null, mockUserRow));
 
-        const mockEntries = [{ id: 'entry1', text: 'Loved this track!', trackId: 'testTrack1', userId: 'testUser1' }];
         // Mock unsuccessful journal retrieval in the database
         getJournalEntriesByTrackID.mockImplementation((trackID, userID, callback) => {
             // Simulate a unsuccessful database operation by calling the callback with error
@@ -667,7 +666,7 @@ describe('PUT /journal/:entryId endpoint', () => {
         };
 
 
-        const response = await request(app)
+        await request(app)
             .put('/journal/:testTrack1')
             .set('Cookie', [`accessToken=valid_mock_access_token`])
             .send(updateJournalData)
@@ -753,7 +752,7 @@ describe('DELETE /journal/:entryId endpoint', () => {
         };
 
 
-        const response = await request(app)
+        await request(app)
             .delete('/journal/:testTrack1')
             .set('Cookie', [`accessToken=valid_mock_access_token`])
             .send(deleteJournalData)
