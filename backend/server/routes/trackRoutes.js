@@ -3,7 +3,7 @@ const trackRouter = express.Router();
 
 const { authenticateUser } = require('../middlewares/authenticateUser.js');
 const db = require('../../database/database.js');
-const { generateUniqueID } = require('../utils/utilityFunctions');
+const { generateUniqueID } = require('../../utils/utilityFunctions');
 
 // Endpoint adds track that has been posted from client to database
 trackRouter.post('/track', authenticateUser, function (req, res) {

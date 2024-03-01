@@ -3,7 +3,7 @@ const journalRouter = express.Router();
 
 const { authenticateUser } = require('../middlewares/authenticateUser.js');
 const db = require('../../database/database.js');
-const { generateUniqueID } = require('../utils/utilityFunctions');
+const { generateUniqueID } = require('../../utils/utilityFunctions');
 
 // Endpoint handles adding new journal entry that has been posted from client to database
 journalRouter.post('/journal', authenticateUser, function (req, res) {

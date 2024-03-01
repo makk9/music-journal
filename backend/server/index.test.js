@@ -5,7 +5,7 @@ const httpMocks = require('node-mocks-http');
 jest.mock('axios');
 const axios = require('axios');
 
-const { generateRandomString } = require('./utils/utilityFunctions');
+const { generateRandomString } = require('./../utils/utilityFunctions');
 const { authenticateUser, fetchSpotifyUserProfile } = require('./middlewares/authenticateUser');
 
 jest.mock('../database/database', () => ({

@@ -28,11 +28,11 @@
         "start": "react-scripts --openssl-legacy-provider start",
         "build": "react-scripts build",
         "test": "react-scripts test",
-        "test-database": "cross-env NODE_ENV=test jest --verbose ./database",
-        "test-server": "cross-env NODE_ENV=test jest ./server",
-        "server": "node server",
+        "test-database": "cross-env NODE_ENV=test jest --verbose ./backend/database",
+        "test-server": "cross-env NODE_ENV=test jest ./backend/server",
+        "server": "node ./backend/server",
         "dev": "run-p server start",
-        "setup-db": "node ./database/setupDb.js"
+        "setup-db": "node ./backend/database/setupDb.js"
     },
     "eslintConfig": {
         "extends": [

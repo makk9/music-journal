@@ -2,7 +2,7 @@ const express = require("express")
 const axios = require('axios');
 const authRouter = express.Router();
 
-const { generateRandomString } = require('../utils/utilityFunctions');
+const { generateRandomString } = require('../../utils/utilityFunctions');
 const db = require('../../database/database.js');
 const dotenv = require('dotenv');
 
