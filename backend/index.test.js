@@ -759,6 +759,3 @@ describe('DELETE /journal/:entryId endpoint', () => {
             .expect(401); // Expecting HTTP status code 401 for authentication failure
     });
 });
-
-
-
