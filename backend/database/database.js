@@ -1,6 +1,9 @@
 const sqlite3 = require('sqlite3').verbose();
+const { encrypt, decrypt } = require('../utils/encryption');
+
 
 const dbFile = process.env.NODE_ENV === 'test' ? ':memory:' : './musicjournalApp.db';
+const encryptionKey = process.env.ENCRYPTION_KEY;
 
 // Open a database connection and initialize file based on test environment or not
 let db = new sqlite3.Database(dbFile, sqlite3.OPEN_READWRITE | (dbFile === ':memory:' ? sqlite3.OPEN_CREATE : 0), function (err) {
@@ -80,10 +83,15 @@ function addTrack(track, callback) {
  */
 function addJournalEntry(entry, callback) {
     const { entryID, userID, trackID, entryText, imageURL, createdAt, updatedAt } = entry;
+
+    // Encrypt the entryText and imageURL
+    const encryptedEntryText = encrypt(entryText, encryptionKey);
+    const encryptedImageURL = encrypt(imageURL, encryptionKey);
+
     const sql = `INSERT INTO journal_entries (entryID, userID, trackID, entryText, imageURL, createdAt, updatedAt)
                VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-    db.run(sql, [entryID, userID, trackID, entryText, imageURL, createdAt, updatedAt], function (err) {
+    db.run(sql, [entryID, userID, trackID, encryptedEntryText, encryptedImageURL, createdAt, updatedAt], function (err) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err, null); // communicate to caller of failure of operation
@@ -107,8 +115,16 @@ function getJournalEntriesByTrackID(trackID, userID, callback) {
             console.error('Database error:', err.message);
             callback(err, null);
         } else {
+            // Decrypt entryText and imageURL for each journal entry
+            const decryptedRows = rows.map(row => {
+                return {
+                    ...row,
+                    entryText: decrypt(row.entryText, process.env.ENCRYPTION_KEY),
+                    imageURL: row.imageURL ? decrypt(row.imageURL, process.env.ENCRYPTION_KEY) : null // Check if imageURL exists before decrypting
+                };
+            });
             console.log('Journal Entries have been retrieved with track ID:', trackID);
-            callback(null, rows);
+            callback(null, decryptedRows);
         }
     });
 };
@@ -124,16 +140,21 @@ function updateJournalEntry(entryID, userID, data, callback) {
     let fieldsToUpdate = [];
     let sqlValues = [];
 
-    // check which updatable fields provided and need updating
+    // Encrypt the entryText and imageURL
 
+    // check which updatable fields provided and need updating
     if (data.entryText !== undefined) {
         fieldsToUpdate.push("entryText = ?");
-        sqlValues.push(data.entryText);
+        // encrypt entryText data
+        const encryptedEntryText = encrypt(data.entryText, encryptionKey);
+        sqlValues.push(encryptedEntryText);
     }
 
     if (data.imageURL !== undefined) {
         fieldsToUpdate.push("imageURL = ?");
-        sqlValues.push(data.imageURL);
+        // encrypt imageURL data
+        const encryptedImageURL = encrypt(data.imageURL, encryptionKey);
+        sqlValues.push(encryptedImageURL);
     }
 
     fieldsToUpdate.push("updatedAt = ?");

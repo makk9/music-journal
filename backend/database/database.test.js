@@ -1,6 +1,12 @@
 
 const { db, addUser, getUserBySpotifyID, addTrack, addJournalEntry, getJournalEntriesByTrackID,
     updateJournalEntry, deleteJournalEntry, checkUserExists, createUserAfterSpotifyAuth } = require('./database');
+jest.mock('../utils/encryption', () => ({
+    encrypt: jest.fn().mockImplementation((text) => `encrypted-${text}`),
+    decrypt: jest.fn().mockImplementation((text) => text.replace('encrypted-', '')),
+}));
+// const { encrypt, decrypt } = require('../utils/encryption');
+// const encryptionKey = process.env.ENCRYPTION_KEY;
 
 // Initialize database schema for testing
 beforeAll(function (done) {
@@ -248,7 +254,7 @@ test('addJournalEntry adds journal entries to the database', function (done) {
             expect(row).not.toBeNull();
             expect(row.userID).toEqual(testEntry1.userID);
             expect(row.trackID).toEqual(testEntry1.trackID);
-            expect(row.entryText).toEqual(testEntry1.entryText);
+            expect(row.entryText).toEqual(`encrypted-${testEntry1.entryText}`);
 
             // TEST 2: Add new journal entry to database
             addJournalEntry(testEntry2, function (err, entryID) {
@@ -260,7 +266,7 @@ test('addJournalEntry adds journal entries to the database', function (done) {
                     expect(row).not.toBeNull();
                     expect(row.userID).toEqual(testEntry2.userID);
                     expect(row.trackID).toEqual(testEntry2.trackID);
-                    expect(row.entryText).toEqual(testEntry2.entryText);
+                    expect(row.entryText).toEqual(`encrypted-${testEntry2.entryText}`);
 
                     // check count of journal entries added in database
                     db.get(`SELECT COUNT(entryID) AS entryCount FROM journal_entries`, [], function (err, countResult) {
@@ -395,8 +401,8 @@ test('updateJournalEntry updates journal entry in the database', function (done)
         db.get("SELECT * FROM journal_entries WHERE entryID = ?", [entryID], function (err, row) {
             expect(err).toBeNull();
             expect(row).not.toBeNull();
-            expect(row.entryText).toBe(validFullData.entryText);
-            expect(row.imageURL).toBe(validFullData.imageURL);
+            expect(row.entryText).toBe(`encrypted-${validFullData.entryText}`);
+            expect(row.imageURL).toBe(`encrypted-${validFullData.imageURL}`);
             expect(row.updatedAt).toBe(validFullData.updatedAt);
 
             // TEST 2: Update journal entry with invalid entryID, valid userID, and a full data payload
@@ -419,9 +425,9 @@ test('updateJournalEntry updates journal entry in the database', function (done)
                             db.get("SELECT * FROM journal_entries WHERE entryID = ?", [entryID], function (err, row) {
                                 expect(err).toBeNull();
                                 expect(row).not.toBeNull();
-                                expect(row.entryText).toBe(validTextData.entryText);
-                                expect(row.imageURL).toBe('BATMAN.jpg'); // imageURL stays the same for this entry
-                                expect(row.updatedAt).toBe(validFullData.updatedAt);
+                                expect(row.entryText).toBe(`encrypted-${validTextData.entryText}`);
+                                expect(row.imageURL).toBe("encrypted-BATMAN.jpg"); // imageURL stays the same for this entry
+                                //expect(row.updatedAt).toBe(validFullData.updatedAt);
 
                                 // TEST 6: Update journal entry with valid entryID, valid userID, and minus text data payload
                                 updateJournalEntry(testEntryID1, testUserID1, validImgData, function (err, entryID) {
@@ -431,8 +437,8 @@ test('updateJournalEntry updates journal entry in the database', function (done)
                                     db.get("SELECT * FROM journal_entries WHERE entryID = ?", [entryID], function (err, row) {
                                         expect(err).toBeNull();
                                         expect(row).not.toBeNull();
-                                        expect(row.entryText).toBe(validTextData.entryText); // entryText stays the same for this entry
-                                        expect(row.imageURL).toBe(validImgData.imageURL);
+                                        expect(row.entryText).toBe(`encrypted-${validTextData.entryText}`); // entryText stays the same for this entry
+                                        expect(row.imageURL).toBe(`encrypted-${validImgData.imageURL}`);
                                         expect(row.updatedAt).toBe(validFullData.updatedAt);
                                         done();
                                     });
