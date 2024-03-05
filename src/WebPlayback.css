@@ -1,0 +1,12 @@
+.main-wrapper {
+  display: flex;
+  justify-content: space-between; /* Or 'flex-start' if you want them close together */
+  align-items: start; /* To align items to the top */
+  /* Add more styles as needed */
+}
+
+/* Styles specific to the WebPlayback component */
+.web-playback-ui {
+  /* Style for the web playback UI */
+  margin-right: 20px; /* Add some space between the player and the journal entry */
+}

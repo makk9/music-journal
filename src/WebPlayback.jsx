@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import JournalEntry from "./JournalEntry";
+import './WebPlayback.css';
 
 const track = {
   name: "",
@@ -112,46 +114,50 @@ function WebPlayback(props) {
     <>
       <div className="container" style={{ backgroundColor: backgroundColor }}>
         <div className="main-wrapper">
-          {/* Conditional rendering to ensure current_track and its properties are not null */}
-          {current_track && current_track.album && current_track.album.images.length > 0 ? (
-            <img src={current_track.album.images[0].url} className="now-playing__cover" alt="" />
-          ) : (
-            // Render a placeholder or nothing if current_track is not ready
-            <div className="now-playing__cover-placeholder"></div>
-          )}
+          <div className="web-playback-ui">
+            {/* Conditional rendering to ensure current_track and its properties are not null */}
+            {current_track && current_track.album && current_track.album.images.length > 0 ? (
+              <img src={current_track.album.images[0].url} className="now-playing__cover" alt="" />
+            ) : (
+              // Render a placeholder or nothing if current_track is not ready
+              <div className="now-playing__cover-placeholder"></div>
+            )}
 
-          <div className="now-playing__side">
-            <div className="now-playing__name">{current_track ? current_track.name : "No track playing"}</div>
-            <div className="now-playing__artist">
-              {current_track && current_track.artists.length > 0 ? current_track.artists[0].name : "Unknown artist"}
+            <div className="now-playing__side">
+              <div className="now-playing__name">{current_track ? current_track.name : "No track playing"}</div>
+              <div className="now-playing__artist">
+                {current_track && current_track.artists.length > 0 ? current_track.artists[0].name : "Unknown artist"}
+              </div>
+
+              <button
+                className="btn-spotify"
+                onClick={() => {
+                  player && player.previousTrack();
+                }}
+              >
+                &lt;&lt;
+              </button>
+
+              <button
+                className="btn-spotify"
+                onClick={() => {
+                  player && player.togglePlay();
+                }}
+              >
+                {is_paused ? "PLAY" : "PAUSE"}
+              </button>
+
+              <button
+                className="btn-spotify"
+                onClick={() => {
+                  player && player.nextTrack();
+                }}
+              >
+                &gt;&gt;
+              </button>
             </div>
 
-            <button
-              className="btn-spotify"
-              onClick={() => {
-                player && player.previousTrack();
-              }}
-            >
-              &lt;&lt;
-            </button>
-
-            <button
-              className="btn-spotify"
-              onClick={() => {
-                player && player.togglePlay();
-              }}
-            >
-              {is_paused ? "PLAY" : "PAUSE"}
-            </button>
-
-            <button
-              className="btn-spotify"
-              onClick={() => {
-                player && player.nextTrack();
-              }}
-            >
-              &gt;&gt;
-            </button>
+            <JournalEntry currentTrack={current_track} />
           </div>
         </div>
       </div>
