@@ -51,7 +51,7 @@ function getUserBySpotifyID(userID, callback) {
             callback(err, null);
         } else {
             console.log('User has been retrieved with spotify ID:', userID);
-            callback(null, row);
+            callback(null, row[0]);
         }
     });
 }
@@ -62,36 +62,39 @@ function getUserBySpotifyID(userID, callback) {
  * @param {Function} callback - A callback function to be called with the results.
  */
 function addTrack(track, callback) {
-    const { trackID, spotifyTrackID, title, artist, album } = track;
-    const sql = `INSERT INTO tracks (trackID, spotifyTrackID, title, artist, album) VALUES (?, ?, ?, ?, ?)`;
+    const { spotifyTrackID, trackTitle, artist, album } = track;
+    const sql = `INSERT OR IGNORE INTO tracks (spotifyTrackID, title, artist, album) VALUES (?, ?, ?, ?)`;
 
-    db.run(sql, [trackID, spotifyTrackID, title, artist, album], function (err) {
+    db.run(sql, [spotifyTrackID, trackTitle, artist, album], function (err) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err, null);
         } else {
-            console.log('A new track has been added with ID:', trackID);
-            callback(null, trackID);
+            console.log('A new track has been added or ignored if already exists, with ID:', spotifyTrackID);
+            callback(null, spotifyTrackID);
         }
     });
 };
 
+// TODO: Need to account for OPTIONAL imageURL when adding an entry here. 
+//       Need to keep style same as updateJournalEntry.
 /**
  * Adds a new journal entry to the database.
  * @param {Object} entry - The journal entry object to add.
  * @param {Function} callback - A callback function to be called with the results.
  */
 function addJournalEntry(entry, callback) {
-    const { entryID, userID, trackID, entryText, imageURL, createdAt, updatedAt } = entry;
+    const { entryID, userID, trackID, entryTitle, entryText, imageURL, createdAt, updatedAt } = entry;
 
-    // Encrypt the entryText and imageURL
+    // Encrypt the journal contents
+    const encryptedEntryTitle = encrypt(entryTitle, encryptionKey);
     const encryptedEntryText = encrypt(entryText, encryptionKey);
     const encryptedImageURL = encrypt(imageURL, encryptionKey);
 
-    const sql = `INSERT INTO journal_entries (entryID, userID, trackID, entryText, imageURL, createdAt, updatedAt)
-               VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    const sql = `INSERT INTO journal_entries (entryID, userID, trackID, entryTitle, entryText, imageURL, createdAt, updatedAt)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    db.run(sql, [entryID, userID, trackID, encryptedEntryText, encryptedImageURL, createdAt, updatedAt], function (err) {
+    db.run(sql, [entryID, userID, trackID, encryptedEntryTitle, encryptedEntryText, encryptedImageURL, createdAt, updatedAt], function (err) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err, null); // communicate to caller of failure of operation

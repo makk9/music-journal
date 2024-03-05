@@ -18,8 +18,7 @@ db.serialize(() => {
 
   // Tracks Table
   db.run(`CREATE TABLE IF NOT EXISTS tracks (
-    trackID TEXT PRIMARY KEY,
-    spotifyTrackID TEXT NOT NULL,
+    spotifyTrackID TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     artist TEXT NOT NULL,
     album TEXT NOT NULL
@@ -30,12 +29,13 @@ db.serialize(() => {
     entryID TEXT PRIMARY KEY,
     userID TEXT NOT NULL,
     trackID TEXT NOT NULL,
+    entryTitle TEXT NOT NULL,
     entryText TEXT NOT NULL,
     imageURL TEXT,
     createdAt TEXT NOT NULL,
     updatedAt TEXT NOT NULL,
     FOREIGN KEY(userID) REFERENCES users(userID),
-    FOREIGN KEY(trackID) REFERENCES tracks(trackID)
+    FOREIGN KEY(trackID) REFERENCES tracks(spotifyTrackID)
   );`);
 });
 

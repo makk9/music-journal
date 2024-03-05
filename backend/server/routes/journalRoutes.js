@@ -9,18 +9,21 @@ const { generateUniqueID } = require('../../utils/utilityFunctions');
 journalRouter.post('/journal', authenticateUser, function (req, res) {
     console.log("JOURNAL ENDPOINT");
     // Extract journal entry details from request body
-    const { userID, trackID, entryText, imageURL } = req.body;
+    const { trackID, entryTitle, entryText, imageURL } = req.body;
 
     // Generate a unique entryID and timestamps
     const entryID = generateUniqueID();
     const createdAt = new Date().toISOString();
     const updatedAt = createdAt;
 
+    const userID = req.user.userID;
+
     // Insert the new journal entry into the database
     db.addJournalEntry({
         entryID,
         userID,
         trackID,
+        entryTitle,
         entryText,
         imageURL,
         createdAt,

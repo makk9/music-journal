@@ -1,4 +1,3 @@
-
 const { db, addUser, getUserBySpotifyID, addTrack, addJournalEntry, getJournalEntriesByTrackID,
     updateJournalEntry, deleteJournalEntry, checkUserExists, createUserAfterSpotifyAuth } = require('./database');
 jest.mock('../utils/encryption', () => ({
@@ -26,8 +25,7 @@ beforeAll(function (done) {
       );`);
 
         db.run(`CREATE TABLE IF NOT EXISTS tracks (
-        trackID TEXT PRIMARY KEY,
-        spotifyTrackID TEXT NOT NULL,
+        spotifyTrackID TEXT PRIMARY KEY,
         title TEXT NOT NULL,
         artist TEXT NOT NULL,
         album TEXT NOT NULL
@@ -37,12 +35,13 @@ beforeAll(function (done) {
         entryID TEXT PRIMARY KEY,
         userID TEXT NOT NULL,
         trackID TEXT NOT NULL,
+        entryTitle TEXT NOT NULL,
         entryText TEXT NOT NULL,
         imageURL TEXT,
         createdAt TEXT NOT NULL,
         updatedAt TEXT NOT NULL,
         FOREIGN KEY(userID) REFERENCES users(userID),
-        FOREIGN KEY(trackID) REFERENCES tracks(trackID)
+        FOREIGN KEY(trackID) REFERENCES tracks(spotifyTrackID)
       );`, done); // 'done' callback to ensure the schema is set up before tests run
     });
 });
@@ -125,12 +124,12 @@ test('getUserBySpotifyID gets user by spotify ID from database', function (done)
     // TEST 1: Get valid user ID from database
     getUserBySpotifyID(validUserID1, function (err, user) {
         expect(err).toBeNull();
-        expect(user[0]).toEqual(testUser1);
+        expect(user).toEqual(testUser1);
 
         // TEST 2: Get invalid userID from database
         getUserBySpotifyID(invalidUserID2, function (err, user) {
             expect(err).toBeNull();
-            expect(user[0]).toBeUndefined();
+            expect(user).toBeUndefined();
             done();
         });
     });
@@ -139,7 +138,6 @@ test('getUserBySpotifyID gets user by spotify ID from database', function (done)
 // Test addTrack function
 test('addTrack adds tracks to the database', function (done) {
     const testTrack1 = {
-        trackID: 'testTrack1',
         spotifyTrackID: 'testTrack1',
         title: 'I Beat Them All',
         artist: 'Daniel Pemberton',
@@ -147,7 +145,6 @@ test('addTrack adds tracks to the database', function (done) {
     };
 
     const testTrack2 = {
-        trackID: 'testTrack2',
         spotifyTrackID: 'testTrack2',
         title: 'Destroyer Of Worlds',
         artist: 'Ludwig Goransson',
@@ -155,39 +152,38 @@ test('addTrack adds tracks to the database', function (done) {
     };
 
     // TEST 1: Add track to database
-    addTrack(testTrack1, function (err, trackID) {
+    addTrack(testTrack1, function (err, spotifyTrackID) {
         expect(err).toBeNull(); // Expect no error
-        expect(trackID).toEqual(testTrack1.trackID); // Expect the added trackID to be the same as the input
+        expect(spotifyTrackID).toEqual(testTrack1.spotifyTrackID); // Expect the added trackID to be the same as the input
 
         // Verify the track was added to the database
-        db.get(`SELECT * FROM tracks WHERE trackID = ?`, [trackID], function (err, row) {
+        db.get(`SELECT * FROM tracks WHERE spotifyTrackID = ?`, [spotifyTrackID], function (err, row) {
             expect(err).toBeNull(); // Expect no error on retrieval
             expect(row).not.toBeNull(); // Expect a track to be found
             expect(row.spotifyTrackID).toEqual(testTrack1.spotifyTrackID); // Expect the spotifyTrackID to match
             expect(row.title).toEqual(testTrack1.title); // Expect the title to match
 
             // TEST 2: Add new track to database
-            addTrack(testTrack2, function (err, trackID) {
+            addTrack(testTrack2, function (err, spotifyTrackID) {
                 expect(err).toBeNull();
-                expect(trackID).toEqual(testTrack2.trackID);
+                expect(spotifyTrackID).toEqual(testTrack2.spotifyTrackID);
 
-                db.get(`SELECT * FROM tracks WHERE trackID = ?`, [trackID], function (err, row) {
+                db.get(`SELECT * FROM tracks WHERE spotifyTrackID = ?`, [spotifyTrackID], function (err, row) {
                     expect(err).toBeNull();
                     expect(row).not.toBeNull();
                     expect(row.spotifyTrackID).toEqual(testTrack2.spotifyTrackID);
                     expect(row.title).toEqual(testTrack2.title);
 
                     // check count of tracks added in database
-                    db.get(`SELECT COUNT(trackID) AS trackCount FROM tracks`, [], function (err, countResult) {
+                    db.get(`SELECT COUNT(spotifyTrackID) AS trackCount FROM tracks`, [], function (err, countResult) {
                         expect(err).toBeNull();
                         expect(countResult.trackCount).toBe(2);
 
                         // TEST 3: Add duplicate track to database
                         addTrack(testTrack1, function (err) {
-                            expect(err.message).toBe("SQLITE_CONSTRAINT: UNIQUE constraint failed: tracks.trackID");
 
                             // check count of tracks stays the same and duplicate track is not added
-                            db.get(`SELECT COUNT(trackID) AS trackCount FROM tracks`, [], function (err, countResult) {
+                            db.get(`SELECT COUNT(spotifyTrackID) AS trackCount FROM tracks`, [], function (err, countResult) {
                                 expect(err).toBeNull();
                                 expect(countResult.trackCount).toBe(2);
                                 done();
@@ -207,6 +203,7 @@ test('addJournalEntry adds journal entries to the database', function (done) {
         entryID: 'testEntry1',
         userID: 'testUser1',
         trackID: 'testTrack1',
+        entryTitle: 'Summer Memories',
         entryText: 'This song reminds me of summer...',
         imageURL: 'http://Batman.jpg',
         createdAt: new Date().toISOString(),
@@ -217,6 +214,7 @@ test('addJournalEntry adds journal entries to the database', function (done) {
         entryID: 'testEntry2',
         userID: 'testUser2',
         trackID: 'testTrack2',
+        entryTitle: 'Finalssssssss',
         entryText: 'The only thing that kept me going during finals...',
         imageURL: 'http://Studying.jpg',
         createdAt: new Date().toISOString(),
@@ -227,6 +225,7 @@ test('addJournalEntry adds journal entries to the database', function (done) {
         entryID: 'testEntry3',
         userID: 'testUser3', // this user does not exist in our testing database schema
         trackID: 'testTrack2',
+        entryTitle: 'SHARIGANN!!!',
         entryText: 'I read my manga with this track playing the wholetime...',
         imageURL: 'http://manga.jpg',
         createdAt: new Date().toISOString(),
@@ -237,6 +236,7 @@ test('addJournalEntry adds journal entries to the database', function (done) {
         entryID: 'testEntry3',
         userID: 'testUser2',
         trackID: 'testTrack3', // this track does not exist in our testing database schema
+        entryTitle: 'SHARIGANN!!!',
         entryText: 'I read my manga with this track playing the wholetime...',
         imageURL: 'http://manga.jpg',
         createdAt: new Date().toISOString(),
