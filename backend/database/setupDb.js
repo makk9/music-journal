@@ -19,7 +19,7 @@ db.serialize(() => {
   // Tracks Table
   db.run(`CREATE TABLE IF NOT EXISTS tracks (
     spotifyTrackID TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
+    trackTitle TEXT NOT NULL,
     artist TEXT NOT NULL,
     album TEXT NOT NULL
   );`);

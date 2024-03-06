@@ -26,7 +26,7 @@ beforeAll(function (done) {
 
         db.run(`CREATE TABLE IF NOT EXISTS tracks (
         spotifyTrackID TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
+        trackTitle TEXT NOT NULL,
         artist TEXT NOT NULL,
         album TEXT NOT NULL
       );`);
@@ -139,14 +139,14 @@ test('getUserBySpotifyID gets user by spotify ID from database', function (done)
 test('addTrack adds tracks to the database', function (done) {
     const testTrack1 = {
         spotifyTrackID: 'testTrack1',
-        title: 'I Beat Them All',
+        trackTitle: 'I Beat Them All',
         artist: 'Daniel Pemberton',
         album: 'Spider-Man: Across the Spiderverse'
     };
 
     const testTrack2 = {
         spotifyTrackID: 'testTrack2',
-        title: 'Destroyer Of Worlds',
+        trackTitle: 'Destroyer Of Worlds',
         artist: 'Ludwig Goransson',
         album: 'Oppenheimer'
     };
@@ -160,8 +160,9 @@ test('addTrack adds tracks to the database', function (done) {
         db.get(`SELECT * FROM tracks WHERE spotifyTrackID = ?`, [spotifyTrackID], function (err, row) {
             expect(err).toBeNull(); // Expect no error on retrieval
             expect(row).not.toBeNull(); // Expect a track to be found
+            console.log("HERE IS THE ROW: " + row);
             expect(row.spotifyTrackID).toEqual(testTrack1.spotifyTrackID); // Expect the spotifyTrackID to match
-            expect(row.title).toEqual(testTrack1.title); // Expect the title to match
+            expect(row.trackTitle).toEqual(testTrack1.trackTitle); // Expect the title to match
 
             // TEST 2: Add new track to database
             addTrack(testTrack2, function (err, spotifyTrackID) {
@@ -172,7 +173,7 @@ test('addTrack adds tracks to the database', function (done) {
                     expect(err).toBeNull();
                     expect(row).not.toBeNull();
                     expect(row.spotifyTrackID).toEqual(testTrack2.spotifyTrackID);
-                    expect(row.title).toEqual(testTrack2.title);
+                    expect(row.trackTitle).toEqual(testTrack2.trackTitle);
 
                     // check count of tracks added in database
                     db.get(`SELECT COUNT(spotifyTrackID) AS trackCount FROM tracks`, [], function (err, countResult) {
@@ -243,7 +244,7 @@ test('addJournalEntry adds journal entries to the database', function (done) {
         updatedAt: new Date().toISOString()
     }
 
-    // TEST 1: Add journal entry to database    
+    // TEST 1: Add journal entry to database
     addJournalEntry(testEntry1, function (err, entryID) {
         expect(err).toBeNull();
         expect(entryID).toEqual(testEntry1.entryID);
@@ -324,7 +325,7 @@ test('getJournalEntriesByTrackID gets journal entries by trackID from the databa
     const testEntry3 = {
         entryID: 'testEntry3',
         userID: 'testUser1', // linking entry to same valid userID as above
-        trackID: 'testTrack1', // linking entry to same valid trackID as above 
+        trackID: 'testTrack1', // linking entry to same valid trackID as above
         entryText: 'I love this track so much, I want to write about it again!',
         imageURL: 'http://Studying.jpg',
         createdAt: new Date().toISOString(),
@@ -332,7 +333,7 @@ test('getJournalEntriesByTrackID gets journal entries by trackID from the databa
     };
 
 
-    // TEST 1: Get journal entry with a valid trackID and valid userID    
+    // TEST 1: Get journal entry with a valid trackID and valid userID
     getJournalEntriesByTrackID(testTrackID1, testUserID1, function (err, entries) {
         expect(err).toBeNull();
         expect(entries).toHaveLength(1); // check how many entries associated with track
@@ -465,7 +466,7 @@ test('deleteJournalEntry deletes journal entries from the database', function (d
         expect(err).toBeNull();
         expect(result.count).toBe(2); // testUserID1 has 2 journal entry before deletion(testEntry1 and testEntry3)
 
-        // TEST 1: Delete journal entry from database    
+        // TEST 1: Delete journal entry from database
         deleteJournalEntry(testEntryID1, testUserID1, function (err) {
             expect(err).toBeNull();
 
@@ -528,7 +529,7 @@ test('createUserAfterSpotifyAuthh creates new user if spotify profile does not e
         display_name: 'Test User 2'
     }
 
-    // new spotify profile non-existent in database 
+    // new spotify profile non-existent in database
     const spotifyProfileBatman = {
         id: 'iambatman',
         email: 'batman@iambatman.com',

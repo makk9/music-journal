@@ -63,7 +63,7 @@ function getUserBySpotifyID(userID, callback) {
  */
 function addTrack(track, callback) {
     const { spotifyTrackID, trackTitle, artist, album } = track;
-    const sql = `INSERT OR IGNORE INTO tracks (spotifyTrackID, title, artist, album) VALUES (?, ?, ?, ?)`;
+    const sql = `INSERT OR IGNORE INTO tracks (spotifyTrackID, trackTitle, artist, album) VALUES (?, ?, ?, ?)`;
 
     db.run(sql, [spotifyTrackID, trackTitle, artist, album], function (err) {
         if (err) {
