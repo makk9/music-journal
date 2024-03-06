@@ -1,0 +1,37 @@
+.container {
+  display: flex; /* Use flexbox layout */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  height: 100vh; /* Full height of the viewport */
+}
+
+.main-wrapper {
+  display: flex;
+  flex-direction: column; /* Stack children vertically */
+  align-items: center; /* Align children to the center horizontally */
+  width: 100%; /* Take the full width of the container */
+}
+
+/* Styles specific to the WebPlayback component */
+.web-playback-ui {
+  display: flex;
+  flex-direction: column; /* Stack children vertically */
+  align-items: center; /* Align items to the center horizontally */
+  width: fit-content; /* Only take as much width as needed */
+  margin: 0; /* Reset any margin if not needed */
+  /*padding-bottom: 20px; */
+}
+
+/* This centers the track info and playback controls underneath the album art */
+.now-playing__side {
+  display: flex; 
+  flex-direction: column; /* Stack items vertically */
+  align-items: center; /* Center items horizontally */
+  text-align: center; /* Center text within each child */
+  width: 100%; /* Take the full width of its parent to center text properly */
+}
+
+/* Center the buttons horizontally */
+.btn-spotify {
+  margin: 0 auto; /* center the buttons if they are block-level elements */
+}

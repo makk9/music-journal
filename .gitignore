@@ -19,6 +19,9 @@
 .env.production.local
 .env
 
+# database 
+musicjournalApp.db
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

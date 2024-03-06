@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import JournalEntry from "./JournalEntry";
+import "./WebPlayback.css";
 
 const track = {
   name: "",
@@ -8,17 +10,20 @@ const track = {
   artists: [{ name: "" }],
 };
 
-/* TODO: 
+/* TODO:
  * Add comments
- * Add tests 
- * Playback backdrop 
-*/
+ * Add tests
+ * Playback backdrop
+ */
 
 function WebPlayback(props) {
   const [player, setPlayer] = useState(undefined);
   const [is_paused, setPaused] = useState(false);
   const [is_active, setActive] = useState(false);
   const [current_track, setTrack] = useState(track);
+
+  const albumArtRef = useRef(null); // Ref to the album art image
+  const [backgroundColor, setBackgroundColor] = useState("rgba(255,255,255,0.5)"); // State to hold the background color
 
   useEffect(() => {
     // check if script is already loaded to prevent unncessary multiple times loading
@@ -90,51 +95,64 @@ function WebPlayback(props) {
     return cleanup;
   }, [props.token, player]);
 
+  // dynamically sets background color based on current album art
+  useEffect(() => {
+    if (current_track && current_track.album && current_track.album.images.length > 0) {
+      const imageUrl = current_track.album.images[0].url;
+      fetch(`/background?url=${encodeURIComponent(imageUrl)}`)
+        .then((res) => res.json())
+        .then(({ r, g, b }) => {
+          const color = `rgba(${r}, ${g}, ${b}, 0.5)`; // Using a 50% opacity
+          // Set the background color state
+          setBackgroundColor(color);
+        })
+        .catch(console.error);
+    }
+  }, [current_track]);
+
   return (
     <>
-      <div className="container">
+      <div className="container" style={{ backgroundColor: backgroundColor }}>
         <div className="main-wrapper">
-          {/* Conditional rendering to ensure current_track and its properties are not null */}
-          {current_track && current_track.album && current_track.album.images.length > 0 ? (
-            <img src={current_track.album.images[0].url} className="now-playing__cover" alt="" />
-          ) : (
-            // Render a placeholder or nothing if current_track is not ready
-            <div className="now-playing__cover-placeholder"></div>
-          )}
+          <div className="web-playback-ui">
+            {/* Conditional rendering to ensure current_track and its properties are not null */}
+            {current_track && current_track.album && current_track.album.images.length > 0 ? (
+              <img src={current_track.album.images[0].url} className="now-playing__cover" alt="" />
+            ) : (
+              // Render a placeholder or nothing if current_track is not ready
+              <div className="now-playing__cover-placeholder"></div>
+            )}
 
-          <div className="now-playing__side">
-            <div className="now-playing__name">{current_track ? current_track.name : "No track playing"}</div>
-            <div className="now-playing__artist">
-              {current_track && current_track.artists.length > 0 ? current_track.artists[0].name : "Unknown artist"}
+            <div className="now-playing__side">
+              <div className="now-playing__name">{current_track ? current_track.name : "No track playing"}</div>
+              <div className="now-playing__artist">
+                {current_track && current_track.artists.length > 0
+                  ? current_track.artists.map((artist, index) => (
+                      <span key={artist.name}>
+                        {artist.name}
+                        {index < current_track.artists.length - 1 ? ", " : ""}
+                      </span>
+                    ))
+                  : "Unknown artist"}
+              </div>
+
+              <div className="playback-controls">
+                <button className="btn-spotify" onClick={() => player && player.previousTrack()}>
+                  &lt;&lt;
+                </button>
+
+                <button className="btn-spotify" onClick={() => player && player.togglePlay()}>
+                  {is_paused ? "PLAY" : "PAUSE"}
+                </button>
+
+                <button className="btn-spotify" onClick={() => player && player.nextTrack()}>
+                  &gt;&gt;
+                </button>
+              </div>
             </div>
-
-            <button
-              className="btn-spotify"
-              onClick={() => {
-                player && player.previousTrack();
-              }}
-            >
-              &lt;&lt;
-            </button>
-
-            <button
-              className="btn-spotify"
-              onClick={() => {
-                player && player.togglePlay();
-              }}
-            >
-              {is_paused ? "PLAY" : "PAUSE"}
-            </button>
-
-            <button
-              className="btn-spotify"
-              onClick={() => {
-                player && player.nextTrack();
-              }}
-            >
-              &gt;&gt;
-            </button>
           </div>
+
+          <JournalEntry currentTrack={current_track} />
         </div>
       </div>
     </>
