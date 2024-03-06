@@ -23,6 +23,7 @@ function JournalEntry({ currentTrack }) {
 
     const handleSave = async () => {
         try {
+            // Call Add Journal Entry Endpoint
             const journalResponse = await fetch('/journal', {
                 method: 'POST',
                 headers: {
@@ -31,6 +32,7 @@ function JournalEntry({ currentTrack }) {
                 },
                 body: JSON.stringify({ 
                     trackID: currentTrack.id, 
+                    journalCover: currentTrack.album.images[0].url,
                     entryTitle,
                     entryText, 
                     imageURL }),
@@ -40,6 +42,7 @@ function JournalEntry({ currentTrack }) {
                 throw new Error('Failed to save journal entry');
             }
 
+            // Call Add Track Endpoint
             const trackResponse = await fetch('/track', {
                 method: 'POST',
                 headers: {
@@ -49,7 +52,7 @@ function JournalEntry({ currentTrack }) {
                 body: JSON.stringify({ 
                     spotifyTrackID: currentTrack.id, 
                     trackTitle: currentTrack.name, 
-                    artist: currentTrack.artists[0].name, 
+                    artist: currentTrack.artists.map((artist) => artist.name).join(', '), 
                     album: currentTrack.album.name }),
             });
 

@@ -76,25 +76,24 @@ function addTrack(track, callback) {
     });
 };
 
-// TODO: Need to account for OPTIONAL imageURL when adding an entry here. 
-//       Need to keep style same as updateJournalEntry.
 /**
  * Adds a new journal entry to the database.
  * @param {Object} entry - The journal entry object to add.
  * @param {Function} callback - A callback function to be called with the results.
  */
 function addJournalEntry(entry, callback) {
-    const { entryID, userID, trackID, entryTitle, entryText, imageURL, createdAt, updatedAt } = entry;
+    const { entryID, userID, trackID, journalCover, entryTitle, entryText, imageURL, createdAt, updatedAt } = entry;
 
     // Encrypt the journal contents
+    const encryptedJournalCover = encrypt(journalCover, encryptionKey);
     const encryptedEntryTitle = encrypt(entryTitle, encryptionKey);
     const encryptedEntryText = encrypt(entryText, encryptionKey);
     const encryptedImageURL = encrypt(imageURL, encryptionKey);
 
-    const sql = `INSERT INTO journal_entries (entryID, userID, trackID, entryTitle, entryText, imageURL, createdAt, updatedAt)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    const sql = `INSERT INTO journal_entries (entryID, userID, trackID, journalCover, entryTitle, entryText, imageURL, createdAt, updatedAt)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    db.run(sql, [entryID, userID, trackID, encryptedEntryTitle, encryptedEntryText, encryptedImageURL, createdAt, updatedAt], function (err) {
+    db.run(sql, [entryID, userID, trackID, encryptedJournalCover, encryptedEntryTitle, encryptedEntryText, encryptedImageURL, createdAt, updatedAt], function (err) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err, null); // communicate to caller of failure of operation
@@ -122,6 +121,8 @@ function getJournalEntriesByTrackID(trackID, userID, callback) {
             const decryptedRows = rows.map(row => {
                 return {
                     ...row,
+                    journalCover: decrypt(row.journalCover, process.env.ENCRYPTION_KEY),
+                    entryTitle: decrypt(row.entryTitle, process.env.ENCRYPTION_KEY),
                     entryText: decrypt(row.entryText, process.env.ENCRYPTION_KEY),
                     imageURL: row.imageURL ? decrypt(row.imageURL, process.env.ENCRYPTION_KEY) : null // Check if imageURL exists before decrypting
                 };
@@ -146,13 +147,24 @@ function updateJournalEntry(entryID, userID, data, callback) {
     // Encrypt the entryText and imageURL
 
     // check which updatable fields provided and need updating
+    if (data.journalCover !== undefined) {
+        fieldsToUpdate.push("journalCover = ?");
+        // encrypt journalCover data
+        const encryptedJournalCover = encrypt(data.journalCover, encryptionKey);
+        sqlValues.push(encryptedJournalCover);
+    }
+    if (data.entryTitle !== undefined) {
+        fieldsToUpdate.push("entryTitle = ?");
+        // encrypt entryTitle data
+        const encryptedEntryTitle = encrypt(data.entryTitle, encryptionKey);
+        sqlValues.push(encryptedEntryTitle);
+    }
     if (data.entryText !== undefined) {
         fieldsToUpdate.push("entryText = ?");
         // encrypt entryText data
         const encryptedEntryText = encrypt(data.entryText, encryptionKey);
         sqlValues.push(encryptedEntryText);
     }
-
     if (data.imageURL !== undefined) {
         fieldsToUpdate.push("imageURL = ?");
         // encrypt imageURL data

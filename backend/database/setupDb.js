@@ -29,6 +29,7 @@ db.serialize(() => {
     entryID TEXT PRIMARY KEY,
     userID TEXT NOT NULL,
     trackID TEXT NOT NULL,
+    journalCover TEXT NOT NULL,
     entryTitle TEXT NOT NULL,
     entryText TEXT NOT NULL,
     imageURL TEXT,

@@ -9,7 +9,7 @@ const { generateUniqueID } = require('../../utils/utilityFunctions');
 journalRouter.post('/journal', authenticateUser, function (req, res) {
     console.log("JOURNAL ENDPOINT");
     // Extract journal entry details from request body
-    const { trackID, entryTitle, entryText, imageURL } = req.body;
+    const { trackID, journalCover, entryTitle, entryText, imageURL } = req.body;
 
     // Generate a unique entryID and timestamps
     const entryID = generateUniqueID();
@@ -23,6 +23,7 @@ journalRouter.post('/journal', authenticateUser, function (req, res) {
         entryID,
         userID,
         trackID,
+        journalCover,
         entryTitle,
         entryText,
         imageURL,
