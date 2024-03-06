@@ -5,16 +5,19 @@ import './JournalEntry.css';
  * Add attaching image capability to entry
  * Journal Entry Title
  */
+
+function getDefaultEntryTitle() {
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+    const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+    const currentDate = new Date();
+    const dateString = currentDate.toLocaleDateString('en-US', dateOptions);
+    const timeString = currentDate.toLocaleTimeString('en-US', timeOptions);
+
+    return `${dateString} at ${timeString}`;
+}
+
 function JournalEntry({ currentTrack }) {
-    const [entryTitle, setEntryTitle] = useState(function () {
-        const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
-        const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
-        const currentDate = new Date();
-        const dateString = currentDate.toLocaleDateString('en-US', dateOptions);
-        const timeString = currentDate.toLocaleTimeString('en-US', timeOptions);
-      
-        return `${dateString} at ${timeString}`;
-      });
+    const [entryTitle, setEntryTitle] = useState(getDefaultEntryTitle);
     const [entryText, setEntryText] = useState('');
     const [imageURL, setImageURL] = useState('');
 
@@ -55,6 +58,7 @@ function JournalEntry({ currentTrack }) {
             }
 
             // Handle the response, clear the text & image area, give user feedback
+            setEntryTitle(getDefaultEntryTitle);
             setEntryText('');
             setImageURL('');
             alert('Journal entry saved!');
@@ -69,10 +73,10 @@ function JournalEntry({ currentTrack }) {
         <>
         <div className="journal-entry">
             <input
+                className="journal-entry-title"
                 type="text"
                 value={entryTitle}
                 onChange={(e) => setEntryTitle(e.target.value)}
-                className="journal-entry-title"
                 aria-label="Entry Title"
             />
             <textarea

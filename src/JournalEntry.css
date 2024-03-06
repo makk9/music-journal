@@ -4,6 +4,7 @@
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 16px;
+  width: 95%;
 }
 
 .journal-entry {
@@ -14,6 +15,8 @@
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     background-color: white;
+    width: 50%;
+    margin-top: 50px; /* Adds space above the journal entry */
   }
   
   .journal-entry textarea {
@@ -22,7 +25,7 @@
     border: 1px solid #ccc;
     border-radius: 4px;
     height: 300px; /* Fixed height for the textarea */
-    width: 1000px;
+    width: 98.5%;
     resize: none; /* Disable the ability to resize the textarea */
   }
   
