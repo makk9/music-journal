@@ -10,6 +10,7 @@ const Vibrant = require('node-vibrant');
 // Also could be cool to have the option to set your own background and somehow merge album art background with it.
 // Could also be cool if you can find color that "pops" out the most in an album that's not within the defined borders of album art.
 // Also, if we could somehow ignore the skin color of any human on the cover why extracting theme color could be ideal. 
+// If we could get two main primary colors and gradient them that could be cool
 
 // Endpoint to dynamically set backgroudn color of application based on primary color extracted from album art.
 
