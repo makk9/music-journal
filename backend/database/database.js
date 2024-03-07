@@ -107,6 +107,7 @@ function addJournalEntry(entry, callback) {
 /**
  * Retrieves journal entries for a specific track ID and userID.
  * @param {string} trackID - The ID of the track for which to retrieve journal entries.
+ * @param {string} userID - The ID of the user for which to retrieve journal entries.
  * @param {Function} callback - A callback function to be called with the results.
  */
 function getJournalEntriesByTrackID(trackID, userID, callback) {
@@ -128,6 +129,35 @@ function getJournalEntriesByTrackID(trackID, userID, callback) {
                 };
             });
             console.log('Journal Entries have been retrieved with track ID:', trackID);
+            callback(null, decryptedRows);
+        }
+    });
+};
+
+/**
+ * Retrieves all journal entries associated with user..
+ * @param {string} userID - The ID of the user for which to retrieve journal entries.
+ * @param {Function} callback - A callback function to be called with the results.
+ */
+function getAllUserJournalEntries(userID, callback) {
+    const sql = `SELECT * FROM journal_entries WHERE userID = ?`;
+
+    db.all(sql, [userID], function (err, rows) {
+        if (err) {
+            console.error('Database error:', err.message);
+            callback(err, null);
+        } else {
+            // Decrypt entryText and imageURL for each journal entry
+            const decryptedRows = rows.map(row => {
+                return {
+                    ...row,
+                    journalCover: decrypt(row.journalCover, process.env.ENCRYPTION_KEY),
+                    entryTitle: decrypt(row.entryTitle, process.env.ENCRYPTION_KEY),
+                    entryText: decrypt(row.entryText, process.env.ENCRYPTION_KEY),
+                    imageURL: row.imageURL ? decrypt(row.imageURL, process.env.ENCRYPTION_KEY) : null // Check if imageURL exists before decrypting
+                };
+            });
+            console.log('Journal Entries have been retrieved with user ID:', userID);
             callback(null, decryptedRows);
         }
     });
@@ -327,6 +357,7 @@ module.exports = {
     addTrack,
     addJournalEntry,
     getJournalEntriesByTrackID,
+    getAllUserJournalEntries,
     updateJournalEntry,
     deleteJournalEntry,
     checkUserExists,
