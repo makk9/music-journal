@@ -14,6 +14,14 @@ let db = new sqlite3.Database(dbFile, sqlite3.OPEN_READWRITE | (dbFile === ':mem
         if (dbFile === ':memory:') {
             console.log('Using in-memory database for testing.');
         }
+        // Enable foreign key support
+        db.run("PRAGMA foreign_keys = ON;", (err) => {
+            if (err) {
+                console.error("Error enabling foreign key support:", err.message);
+            } else {
+                console.log("Foreign key support enabled.");
+            }
+        });
     }
 });
 

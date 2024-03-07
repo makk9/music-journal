@@ -23,6 +23,24 @@ function JournalEntry({ currentTrack }) {
 
     const handleSave = async () => {
         try {
+            // Call Add Track Endpoint
+            const trackResponse = await fetch('/track', {
+                method: 'POST',
+                headers: {
+                    // header for Express to correctly parse req body
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    spotifyTrackID: currentTrack.id, 
+                    trackTitle: currentTrack.name, 
+                    artist: currentTrack.artists.map((artist) => artist.name).join(', '), 
+                    album: currentTrack.album.name }),
+            });
+
+            if (!trackResponse.ok) {
+                throw new Error('Failed to add linked track');
+            }
+
             // Call Add Journal Entry Endpoint
             const journalResponse = await fetch('/journal', {
                 method: 'POST',
@@ -40,24 +58,6 @@ function JournalEntry({ currentTrack }) {
 
             if (!journalResponse.ok) {
                 throw new Error('Failed to save journal entry');
-            }
-
-            // Call Add Track Endpoint
-            const trackResponse = await fetch('/track', {
-                method: 'POST',
-                headers: {
-                    // header for Express to correctly parse req body
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    spotifyTrackID: currentTrack.id, 
-                    trackTitle: currentTrack.name, 
-                    artist: currentTrack.artists.map((artist) => artist.name).join(', '), 
-                    album: currentTrack.album.name }),
-            });
-
-            if (!trackResponse.ok) {
-                throw new Error('Failed to add linked track');
             }
 
             // Handle the response, clear the text & image area, give user feedback
