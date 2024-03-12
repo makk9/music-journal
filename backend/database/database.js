@@ -130,10 +130,10 @@ function getJournalEntriesByTrackID(trackID, userID, callback) {
             const decryptedRows = rows.map(row => {
                 return {
                     ...row,
-                    journalCover: decrypt(row.journalCover, process.env.ENCRYPTION_KEY),
-                    entryTitle: decrypt(row.entryTitle, process.env.ENCRYPTION_KEY),
-                    entryText: decrypt(row.entryText, process.env.ENCRYPTION_KEY),
-                    imageURL: row.imageURL ? decrypt(row.imageURL, process.env.ENCRYPTION_KEY) : null // Check if imageURL exists before decrypting
+                    journalCover: decrypt(row.journalCover, encryptionKey),
+                    entryTitle: decrypt(row.entryTitle, encryptionKey),
+                    entryText: decrypt(row.entryText, encryptionKey),
+                    imageURL: row.imageURL ? decrypt(row.imageURL, encryptionKey) : null // Check if imageURL exists before decrypting
                 };
             });
             console.log('Journal Entries have been retrieved with track ID:', trackID);
@@ -155,14 +155,14 @@ function getAllUserJournalEntries(userID, callback) {
             console.error('Database error:', err.message);
             callback(err, null);
         } else {
-            // Decrypt entryText and imageURL for each journal entry
+            // Decrypt journal entry data
             const decryptedRows = rows.map(row => {
                 return {
                     ...row,
-                    journalCover: decrypt(row.journalCover, process.env.ENCRYPTION_KEY),
-                    entryTitle: decrypt(row.entryTitle, process.env.ENCRYPTION_KEY),
-                    entryText: decrypt(row.entryText, process.env.ENCRYPTION_KEY),
-                    imageURL: row.imageURL ? decrypt(row.imageURL, process.env.ENCRYPTION_KEY) : null // Check if imageURL exists before decrypting
+                    journalCover: decrypt(row.journalCover, encryptionKey),
+                    entryTitle: decrypt(row.entryTitle, encryptionKey),
+                    entryText: decrypt(row.entryText, encryptionKey),
+                    imageURL: row.imageURL ? decrypt(row.imageURL, encryptionKey) : null // Check if imageURL exists before decrypting
                 };
             });
             console.log('Journal Entries have been retrieved with user ID:', userID);
