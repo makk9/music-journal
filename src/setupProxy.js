@@ -5,8 +5,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 // sets any API requests from client application with specified path to proxy middleware such that requests will be forwarded to target server: 5000
 module.exports = function (app) {
-    app.use(['/auth/**', '/journal', '/track', '/background'], createProxyMiddleware({
+    app.use(['/auth/**', '/journal', '/journal/**', '/track', '/background'], createProxyMiddleware({
         target: 'http://localhost:5000',
     }));
 };
-
