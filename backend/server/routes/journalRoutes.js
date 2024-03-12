@@ -39,22 +39,6 @@ journalRouter.post('/journal', authenticateUser, function (req, res) {
     });
 });
 
-// Endpoint to get journal entries for specific track ID from database
-journalRouter.get('/journal/:trackId', authenticateUser, function (req, res) {
-    console.log("GET JOURNAL ENDPOINT");
-    const { trackId } = req.params;
-    const userID = req.user.userID; // get user ID that is attached to req from authenticateUser
-
-    db.getJournalEntriesByTrackID(trackId, userID, function (err, entries) {
-        if (err) {
-            console.error('Failed to retrieve journal entries:', err);
-            res.status(500).send('Failed to retrieve journal entries');
-        } else {
-            res.json(entries);
-        }
-    });
-});
-
 // Endpoint to get all journal entries for user from database
 journalRouter.get('/journal/all', authenticateUser, function (req, res) {
     console.log("GET ALL USER JOURNAL ENTRIES ENDPOINT");
@@ -70,6 +54,21 @@ journalRouter.get('/journal/all', authenticateUser, function (req, res) {
     });
 });
 
+// Endpoint to get journal entries for specific track ID from database
+journalRouter.get('/journal/:trackId', authenticateUser, function (req, res) {
+    console.log("GET JOURNAL ENDPOINT");
+    const { trackId } = req.params;
+    const userID = req.user.userID; // get user ID that is attached to req from authenticateUser
+
+    db.getJournalEntriesByTrackID(trackId, userID, function (err, entries) {
+        if (err) {
+            console.error('Failed to retrieve journal entries:', err);
+            res.status(500).send('Failed to retrieve journal entries');
+        } else {
+            res.json(entries);
+        }
+    });
+});
 
 // Endpoint to update existing journal entry from database
 journalRouter.put('/journal/:entryId', authenticateUser, function (req, res) {
