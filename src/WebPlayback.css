@@ -1,11 +1,16 @@
 .container {
-  display: flex; /* Use flexbox layout */
-  justify-content: center; /* Center horizontally */
-  align-items: center; /* Center vertically */
-  height: 100vh; /* Full height of the viewport */
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  height: 100vh;
+  padding-top: 40px; /* Or adjust as needed */
+  width: 100%; /* Ensure the container spans the full width */
+  margin: 0; /* Reset any default margin */
 }
 
 .main-wrapper {
+  flex-grow: 1; /* Allow main-wrapper to grow and fill the available space */
   display: flex;
   flex-direction: column; /* Stack children vertically */
   align-items: center; /* Align children to the center horizontally */
@@ -19,7 +24,14 @@
   align-items: center; /* Align items to the center horizontally */
   width: fit-content; /* Only take as much width as needed */
   margin: 0; /* Reset any margin if not needed */
-  /*padding-bottom: 20px; */
+}
+
+.journal-collection {
+  position: absolute;
+  top: 0; /* Adjust as needed */
+  right: 0; /* Adjust as needed */
+  width: 20%; /* Or any size you want */
+  /* Any additional styling you want for the journal collection */
 }
 
 /* This centers the track info and playback controls underneath the album art */

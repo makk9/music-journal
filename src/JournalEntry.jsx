@@ -16,7 +16,7 @@ function getDefaultEntryTitle() {
     return `${dateString} at ${timeString}`;
 }
 
-function JournalEntry({ currentTrack }) {
+function JournalEntry({ currentTrack, onEntrySave}) {
     const [entryTitle, setEntryTitle] = useState(getDefaultEntryTitle);
     const [entryText, setEntryText] = useState('');
     const [imageURL, setImageURL] = useState('');
@@ -60,6 +60,7 @@ function JournalEntry({ currentTrack }) {
                 throw new Error('Failed to save journal entry');
             }
 
+            onEntrySave();
             // Handle the response, clear the text & image area, give user feedback
             setEntryTitle(getDefaultEntryTitle);
             setEntryText('');

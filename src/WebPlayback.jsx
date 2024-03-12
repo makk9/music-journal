@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import JournalEntry from "./JournalEntry";
 import "./WebPlayback.css";
+import JournalEntry from "./JournalEntry";
+import JournalCollection from "./JournalCollection";
+
 
 const track = {
   name: "",
@@ -24,6 +26,26 @@ function WebPlayback(props) {
 
   const albumArtRef = useRef(null); // Ref to the album art image
   const [backgroundColor, setBackgroundColor] = useState("rgba(255,255,255,0.5)"); // State to hold the background color
+
+  const [refJournalEntries, setrefJournalEntries] = useState([]);
+
+  // Refresh the entries, calling this after a successful save
+  async function refreshJournalEntries() {
+    try {
+      const response = await fetch('/journal/all');
+      if (!response.ok) {
+        throw new Error('Journal entries fetch failed');
+      }
+      const data = await response.json();
+      setrefJournalEntries(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    refreshJournalEntries();
+  }, []);
 
   useEffect(() => {
     // check if script is already loaded to prevent unncessary multiple times loading
@@ -113,6 +135,7 @@ function WebPlayback(props) {
   return (
     <>
       <div className="container" style={{ backgroundColor: backgroundColor }}>
+        <JournalCollection refJournalEntries={refJournalEntries} />
         <div className="main-wrapper">
           <div className="web-playback-ui">
             {/* Conditional rendering to ensure current_track and its properties are not null */}
@@ -151,10 +174,9 @@ function WebPlayback(props) {
               </div>
             </div>
           </div>
-
-          <JournalEntry currentTrack={current_track} />
+          <JournalEntry currentTrack={current_track} onEntrySave={refreshJournalEntries}/>
+          </div>
         </div>
-      </div>
     </>
   );
 }
