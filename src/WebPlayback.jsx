@@ -35,7 +35,7 @@ function WebPlayback(props) {
   // Handles uesr creating a new journal entry
   function handleCreateNewEntry() {
     setIsCreatingNewEntry(true);
-    setActiveEntry(null);
+    setActiveEntry(null); // will be setting activeEntry to null when the user is creating a new journal entry
   }
 
   // Handles user selecting a track for journal entry
