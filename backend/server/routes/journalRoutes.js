@@ -74,12 +74,12 @@ journalRouter.get('/journal/:trackId', authenticateUser, function (req, res) {
 journalRouter.put('/journal/:entryId', authenticateUser, function (req, res) {
     console.log("UPDATE ENTRY ENDPOINT");
     const { entryId } = req.params;
-    const { entryText, imageURL } = req.body;
+    const { entryTitle, entryText, imageURL } = req.body;
     const updatedAt = new Date().toISOString();
 
     const userID = req.user.userID;
 
-    db.updateJournalEntry(entryId, userID, { entryText, imageURL, updatedAt }, function (err) {
+    db.updateJournalEntry(entryId, userID, { entryTitle, entryText, imageURL, updatedAt }, function (err) {
         if (err) {
             console.error('Failed to update journal entry:', err);
             res.status(500).send('Failed to update journal entry');

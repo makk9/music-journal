@@ -39,37 +39,19 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
     }
   }, [activeEntry]);
 
-  const handleSave = async () => {
-    try {
-      // Call Add Track Endpoint
-      const trackResponse = await fetch("/track", {
-        method: "POST",
+  async function handleSave() {
+    // For updating an existing journal entry
+    if (activeEntry) {
+      // Call Put Journal Entry Endpoint that updates journal entry
+      const journalResponse = await fetch(`/journal/${activeEntry.entryID}`, {
+        method: "PUT",
         headers: {
-          // header for Express to correctly parse req body
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          spotifyTrackID: currentTrack.id,
-          trackTitle: currentTrack.name,
-          artist: currentTrack.artists.map((artist) => artist.name).join(", "),
-          album: currentTrack.album.name,
+        params: JSON.stringify({
+          entryID: activeEntry.entryID,
         }),
-      });
-
-      if (!trackResponse.ok) {
-        throw new Error("Failed to add linked track");
-      }
-
-      // Call Add Journal Entry Endpoint
-      const journalResponse = await fetch("/journal", {
-        method: "POST",
-        headers: {
-          // header for Express to correctly parse req body
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
-          trackID: currentTrack.id,
-          journalCover: currentTrack.album.images[0].url,
           entryTitle,
           entryText,
           imageURL,
@@ -80,18 +62,68 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
         throw new Error("Failed to save journal entry");
       }
 
-      refreshJournalEntries(); // refresh journal collection
-      // Handle the response, clear the text & image area, give user feedback
-      setEntryTitle(getDefaultEntryTitle);
-      setEntryText("");
-      setImageURL("");
-      alert("Journal entry saved!");
-    } catch (error) {
-      // Handle error state, provide user feedback
-      console.error("Error saving journal entry:", error);
-      alert("Error saving journal entry.");
+      alert("Journal entry updated!");
+    } 
+    // User is creating and adding a new journal entry
+    else {
+      try {
+        // Call Add Track Endpoint
+        const trackResponse = await fetch("/track", {
+          method: "POST",
+          headers: {
+            // header for Express to correctly parse req body
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            spotifyTrackID: currentTrack.id,
+            trackTitle: currentTrack.name,
+            artist: currentTrack.artists.map((artist) => artist.name).join(", "),
+            album: currentTrack.album.name,
+          }),
+        });
+
+        if (!trackResponse.ok) {
+          throw new Error("Failed to add linked track");
+        }
+
+        // Call Add Journal Entry Endpoint
+        const journalResponse = await fetch("/journal", {
+          method: "POST",
+          headers: {
+            // header for Express to correctly parse req body
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            trackID: currentTrack.id,
+            journalCover: currentTrack.album.images[0].url,
+            entryTitle,
+            entryText,
+            imageURL,
+          }),
+        });
+
+        if (!journalResponse.ok) {
+          throw new Error("Failed to save journal entry");
+        }
+
+        // refreshJournalEntries(); // refresh journal collection
+        // // Handle the response, clear the text & image area, give user feedback
+        // setEntryTitle(getDefaultEntryTitle);
+        // setEntryText("");
+        // setImageURL("");
+        alert("Journal entry saved!");
+      } catch (error) {
+        // Handle error state, provide user feedback
+        console.error("Error saving journal entry:", error);
+        alert("Error saving journal entry.");
+      }
     }
-  };
+    refreshJournalEntries(); // refresh journal collection
+    // Handle the response, clear the text & image area, give user feedback
+    setEntryTitle(getDefaultEntryTitle);
+    setEntryText("");
+    setImageURL("");
+  }
 
   return (
     <>
@@ -118,7 +150,7 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
           <div className="track-hover-info">
             {linkedTrack // Check if linkedTrack is not null
               ? `${linkedTrack.trackTitle} by ${linkedTrack.artist}`
-              : currentTrack && currentTrack.name.length > 1 // Fallback to currentTrack if linkedTrack is null
+              : currentTrack && currentTrack.name.length > 1 // Default to currentTrack if linkedTrack is null
               ? `${currentTrack.name} by ${currentTrack.artists.map((artist) => artist.name).join(", ")}`
               : "No track linked"}
           </div>
