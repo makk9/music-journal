@@ -3,7 +3,6 @@ import "./WebPlayback.css";
 import JournalEntry from "./JournalEntry";
 import JournalCollection from "./JournalCollection";
 
-
 const track = {
   name: "",
   album: {
@@ -28,20 +27,58 @@ function WebPlayback(props) {
   const [backgroundColor, setBackgroundColor] = useState("rgba(255,255,255,0.5)"); // State to hold the background color
 
   const [refJournalEntries, setrefJournalEntries] = useState([]);
+  const [activeEntry, setActiveEntry] = useState(null);
+  const [selectedTrack, setSelectedTrack] = useState(null);
+  const [isCreatingNewEntry, setIsCreatingNewEntry] = useState(false);
+  const [linkedTrack, setLinkedTrack] = useState(null); // represents track that is already linked with an existing journal entry
 
-  // Refresh the entries, calling this after a successful save
+  // Handles uesr creating a new journal entry
+  function handleCreateNewEntry() {
+    setIsCreatingNewEntry(true);
+    setActiveEntry(null);
+  }
+
+  // Handles user selecting a track for journal entry
+  function handleAlbumArtClick() {
+    // Toggle selection: If the current track is already selected, deselect it; otherwise, select it.
+    setSelectedTrack((prevSelectedTrack) => (prevSelectedTrack && prevSelectedTrack.id === current_track.id ? null : current_track));
+  }
+
+  // Refresh the entries, calling API to get all current journal entries after a successful save
   async function refreshJournalEntries() {
     try {
-      const response = await fetch('/journal/all');
+      const response = await fetch("/journal/all");
       if (!response.ok) {
-        throw new Error('Journal entries fetch failed');
+        throw new Error("Journal entries fetch failed");
       }
       const data = await response.json();
       setrefJournalEntries(data);
     } catch (error) {
       console.error(error);
     }
-  };
+  }
+
+  // API call to get track by trackID
+  async function fetchTrackbyTrackID(trackID) {
+    try {
+      const response = await fetch(`track/${trackID}`);
+      if (response.ok) {
+        const track = await response.json();
+        setLinkedTrack(track);
+      } else {
+        // Handle errors
+        console.error("Failed to fetch track details");
+      }
+    } catch (error) {
+      console.error("Error fetching track details:", error);
+    }
+  }
+
+  // Sets the active entry and selected track according to the entry that has been selected
+  function handleEntrySelect(entry) {
+    setActiveEntry(entry); // set active entry as the entry that has been clicked on by user to open
+    fetchTrackbyTrackID(entry.trackID); // get track linked with active entry selected
+  }
 
   useEffect(() => {
     refreshJournalEntries();
@@ -135,12 +172,24 @@ function WebPlayback(props) {
   return (
     <>
       <div className="container" style={{ backgroundColor: backgroundColor }}>
-        <JournalCollection refJournalEntries={refJournalEntries} />
+        <div className="create-new-entry-container">
+          <button className="create-new-entry-button" onClick={handleCreateNewEntry}>
+            +
+          </button>
+        </div>
+        <JournalCollection refJournalEntries={refJournalEntries} onEntrySelect={handleEntrySelect} />
         <div className="main-wrapper">
           <div className="web-playback-ui">
             {/* Conditional rendering to ensure current_track and its properties are not null */}
             {current_track && current_track.album && current_track.album.images.length > 0 ? (
-              <img src={current_track.album.images[0].url} className="now-playing__cover" alt="" />
+              <img
+                src={current_track.album.images[0].url}
+                className="now-playing__cover"
+                alt=""
+                ref={albumArtRef}
+                onClick={handleAlbumArtClick} // Click event to select the track
+                style={{ border: selectedTrack && selectedTrack.id === current_track.id ? "3px solid #1976d2" : "none" }} // Highlight album art when selected
+              />
             ) : (
               // Render a placeholder or nothing if current_track is not ready
               <div className="now-playing__cover-placeholder"></div>
@@ -174,9 +223,16 @@ function WebPlayback(props) {
               </div>
             </div>
           </div>
-          <JournalEntry currentTrack={current_track} onEntrySave={refreshJournalEntries}/>
-          </div>
+          <JournalEntry
+            currentTrack={selectedTrack || current_track} // Pass selectedTrack or default to current_track(track that is playing)
+            linkedTrack={activeEntry ? linkedTrack : null} // Pass linkedTrack with existing active entry open if there is one
+            refreshJournalEntries={refreshJournalEntries}
+            activeEntry={activeEntry}
+            isCreatingNewEntry={isCreatingNewEntry}
+            setIsCreatingNewEntry={setIsCreatingNewEntry}
+          />
         </div>
+      </div>
     </>
   );
 }

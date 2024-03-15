@@ -31,6 +31,7 @@
   top: 0; /* Adjust as needed */
   right: 0; /* Adjust as needed */
   width: 20%; /* Or any size you want */
+  padding-top: 20px;
   /* Any additional styling you want for the journal collection */
 }
 
@@ -47,3 +48,25 @@
 .btn-spotify {
   margin: 0 auto; /* center the buttons if they are block-level elements */
 }
+
+.create-new-entry-container {
+  position: absolute;
+  top: 10px; /* Adjust as needed */
+  left: 10px; /* Adjust as needed */
+}
+
+.create-new-entry-button {
+  background-color: #1976d2;
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  font-size: 24px; /* Adjust as needed */
+  height: 50px; /* Adjust as needed */
+  width: 50px; /* Adjust as needed */
+  line-height: 50px; /* Adjust as needed */
+  text-align: center;
+  box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.16);
+  outline: none;
+}
+
