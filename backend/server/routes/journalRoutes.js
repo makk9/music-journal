@@ -39,6 +39,21 @@ journalRouter.post('/journal', authenticateUser, function (req, res) {
     });
 });
 
+// Endpoint to get all journal entries for user from database
+journalRouter.get('/journal/all', authenticateUser, function (req, res) {
+    console.log("GET ALL USER JOURNAL ENTRIES ENDPOINT");
+    const userID = req.user.userID; // get user ID that is attached to req from authenticateUser
+
+    db.getAllUserJournalEntries(userID, function (err, entries) {
+        if (err) {
+            console.error('Failed to retrieve all journal entries for user:', err);
+            res.status(500).send('Failed to retrieve journal entries');
+        } else {
+            res.json(entries);
+        }
+    });
+});
+
 // Endpoint to get journal entries for specific track ID from database
 journalRouter.get('/journal/:trackId', authenticateUser, function (req, res) {
     console.log("GET JOURNAL ENDPOINT");

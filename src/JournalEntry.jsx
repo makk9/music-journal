@@ -1,100 +1,131 @@
-import React, { useState } from 'react';
-import './JournalEntry.css';
+import React, { useState, useEffect } from "react";
+import "./JournalEntry.css";
+import vinylIcon from "./animated-vinyl.png";
 
-/** TODO: 
+/** TODO:
  * Add attaching image capability to entry
- * Journal Entry Title
  */
 
 function getDefaultEntryTitle() {
-    const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
-    const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
-    const currentDate = new Date();
-    const dateString = currentDate.toLocaleDateString('en-US', dateOptions);
-    const timeString = currentDate.toLocaleTimeString('en-US', timeOptions);
+  const dateOptions = { weekday: "long", year: "numeric", month: "short", day: "numeric" };
+  const timeOptions = { hour: "numeric", minute: "2-digit", hour12: true };
+  const currentDate = new Date();
+  const dateString = currentDate.toLocaleDateString("en-US", dateOptions);
+  const timeString = currentDate.toLocaleTimeString("en-US", timeOptions);
 
-    return `${dateString} at ${timeString}`;
+  return `${dateString} at ${timeString}`;
 }
 
-function JournalEntry({ currentTrack }) {
-    const [entryTitle, setEntryTitle] = useState(getDefaultEntryTitle);
-    const [entryText, setEntryText] = useState('');
-    const [imageURL, setImageURL] = useState('');
+function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCreatingNewEntry, setIsCreatingNewEntry, linkedTrack }) {
+  const [entryTitle, setEntryTitle] = useState(getDefaultEntryTitle);
+  const [entryText, setEntryText] = useState("");
+  const [imageURL, setImageURL] = useState("");
 
-    const handleSave = async () => {
-        try {
-            // Call Add Journal Entry Endpoint
-            const journalResponse = await fetch('/journal', {
-                method: 'POST',
-                headers: {
-                    // header for Express to correctly parse req body
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    trackID: currentTrack.id, 
-                    journalCover: currentTrack.album.images[0].url,
-                    entryTitle,
-                    entryText, 
-                    imageURL }),
-            });
+  useEffect(() => {
+    if (isCreatingNewEntry) {
+      setEntryTitle(getDefaultEntryTitle);
+      setEntryText("");
+      setImageURL("");
+      setIsCreatingNewEntry(false); // want to reset back to false after we have already reset journal state
+    }
+  }, [isCreatingNewEntry, setIsCreatingNewEntry]);
 
-            if (!journalResponse.ok) {
-                throw new Error('Failed to save journal entry');
-            }
+  // When activeEntry changes, populate the state if it's not null
+  useEffect(() => {
+    if (activeEntry) {
+      setEntryTitle(activeEntry.entryTitle);
+      setEntryText(activeEntry.entryText);
+      setImageURL(activeEntry.imageURL);
+    }
+  }, [activeEntry]);
 
-            // Call Add Track Endpoint
-            const trackResponse = await fetch('/track', {
-                method: 'POST',
-                headers: {
-                    // header for Express to correctly parse req body
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    spotifyTrackID: currentTrack.id, 
-                    trackTitle: currentTrack.name, 
-                    artist: currentTrack.artists.map((artist) => artist.name).join(', '), 
-                    album: currentTrack.album.name }),
-            });
+  const handleSave = async () => {
+    try {
+      // Call Add Track Endpoint
+      const trackResponse = await fetch("/track", {
+        method: "POST",
+        headers: {
+          // header for Express to correctly parse req body
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          spotifyTrackID: currentTrack.id,
+          trackTitle: currentTrack.name,
+          artist: currentTrack.artists.map((artist) => artist.name).join(", "),
+          album: currentTrack.album.name,
+        }),
+      });
 
-            if (!trackResponse.ok) {
-                throw new Error('Failed to add linked track');
-            }
+      if (!trackResponse.ok) {
+        throw new Error("Failed to add linked track");
+      }
 
-            // Handle the response, clear the text & image area, give user feedback
-            setEntryTitle(getDefaultEntryTitle);
-            setEntryText('');
-            setImageURL('');
-            alert('Journal entry saved!');
-        } catch (error) {
-            // Handle error state, provide user feedback
-            console.error('Error saving journal entry:', error);
-            alert('Error saving journal entry.');
-        }
-    };
+      // Call Add Journal Entry Endpoint
+      const journalResponse = await fetch("/journal", {
+        method: "POST",
+        headers: {
+          // header for Express to correctly parse req body
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          trackID: currentTrack.id,
+          journalCover: currentTrack.album.images[0].url,
+          entryTitle,
+          entryText,
+          imageURL,
+        }),
+      });
 
-    return (
-        <>
-        <div className="journal-entry">
-            <input
-                className="journal-entry-title"
-                type="text"
-                value={entryTitle}
-                onChange={(e) => setEntryTitle(e.target.value)}
-                aria-label="Entry Title"
-            />
-            <textarea
-                value={entryText}
-                onChange={(e) =>  {
-                    setEntryText(e.target.value);
-                    // hardcoding image value for now
-                    setImageURL('Batman.jpg');
-                }}
-                placeholder="Write your journal entry here..."
-            />
-            <button onClick={handleSave}>Save Entry</button>
+      if (!journalResponse.ok) {
+        throw new Error("Failed to save journal entry");
+      }
+
+      refreshJournalEntries(); // refresh journal collection
+      // Handle the response, clear the text & image area, give user feedback
+      setEntryTitle(getDefaultEntryTitle);
+      setEntryText("");
+      setImageURL("");
+      alert("Journal entry saved!");
+    } catch (error) {
+      // Handle error state, provide user feedback
+      console.error("Error saving journal entry:", error);
+      alert("Error saving journal entry.");
+    }
+  };
+
+  return (
+    <>
+      <div className="journal-entry">
+        <input
+          className="journal-entry-title"
+          type="text"
+          value={entryTitle}
+          onChange={(e) => setEntryTitle(e.target.value)}
+          aria-label="Entry Title"
+        />
+        <textarea
+          value={entryText}
+          onChange={(e) => {
+            setEntryText(e.target.value);
+            // hardcoding image value for now
+            setImageURL("Batman.jpg");
+          }}
+          placeholder="Write your journal entry here..."
+        />
+        <button onClick={handleSave}>Save Entry</button>
+        <div className="journal-entry-vinyl">
+          <img src={vinylIcon} alt="Vinyl" className="vinyl-icon" />
+          <div className="track-hover-info">
+            {linkedTrack // Check if linkedTrack is not null
+              ? `${linkedTrack.trackTitle} by ${linkedTrack.artist}`
+              : currentTrack && currentTrack.name.length > 1 // Fallback to currentTrack if linkedTrack is null
+              ? `${currentTrack.name} by ${currentTrack.artists.map((artist) => artist.name).join(", ")}`
+              : "No track linked"}
+          </div>
         </div>
-        </>
-    );
+      </div>
+    </>
+  );
 }
 
 export default JournalEntry;

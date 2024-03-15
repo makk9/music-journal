@@ -14,6 +14,14 @@ let db = new sqlite3.Database(dbFile, sqlite3.OPEN_READWRITE | (dbFile === ':mem
         if (dbFile === ':memory:') {
             console.log('Using in-memory database for testing.');
         }
+        // Enable foreign key support
+        db.run("PRAGMA foreign_keys = ON;", (err) => {
+            if (err) {
+                console.error("Error enabling foreign key support:", err.message);
+            } else {
+                console.log("Foreign key support enabled.");
+            }
+        });
     }
 });
 
@@ -77,6 +85,24 @@ function addTrack(track, callback) {
 };
 
 /**
+ * Get track by spotifyTrackID.
+ * @param {string} trackID - The spotifyTrackID of the track for which to retrieve.
+ * @param {Function} callback - A callback function to be called with the results.
+ */
+function getTrackbyTrackID(trackID, callback) {
+    const sql = `SELECT * FROM tracks WHERE spotifyTrackID = ?`;
+
+    db.get(sql, [trackID], function (err, row) {
+        if (err) {
+            console.error('Database error:', err.message);
+            callback(err, null);
+        } else {
+            callback(null, row);
+        }
+    });
+}
+
+/**
  * Adds a new journal entry to the database.
  * @param {Object} entry - The journal entry object to add.
  * @param {Function} callback - A callback function to be called with the results.
@@ -107,6 +133,7 @@ function addJournalEntry(entry, callback) {
 /**
  * Retrieves journal entries for a specific track ID and userID.
  * @param {string} trackID - The ID of the track for which to retrieve journal entries.
+ * @param {string} userID - The ID of the user for which to retrieve journal entries.
  * @param {Function} callback - A callback function to be called with the results.
  */
 function getJournalEntriesByTrackID(trackID, userID, callback) {
@@ -121,13 +148,42 @@ function getJournalEntriesByTrackID(trackID, userID, callback) {
             const decryptedRows = rows.map(row => {
                 return {
                     ...row,
-                    journalCover: decrypt(row.journalCover, process.env.ENCRYPTION_KEY),
-                    entryTitle: decrypt(row.entryTitle, process.env.ENCRYPTION_KEY),
-                    entryText: decrypt(row.entryText, process.env.ENCRYPTION_KEY),
-                    imageURL: row.imageURL ? decrypt(row.imageURL, process.env.ENCRYPTION_KEY) : null // Check if imageURL exists before decrypting
+                    journalCover: decrypt(row.journalCover, encryptionKey),
+                    entryTitle: decrypt(row.entryTitle, encryptionKey),
+                    entryText: decrypt(row.entryText, encryptionKey),
+                    imageURL: row.imageURL ? decrypt(row.imageURL, encryptionKey) : null // Check if imageURL exists before decrypting
                 };
             });
             console.log('Journal Entries have been retrieved with track ID:', trackID);
+            callback(null, decryptedRows);
+        }
+    });
+};
+
+/**
+ * Retrieves all journal entries associated with user..
+ * @param {string} userID - The ID of the user for which to retrieve journal entries.
+ * @param {Function} callback - A callback function to be called with the results.
+ */
+function getAllUserJournalEntries(userID, callback) {
+    const sql = `SELECT * FROM journal_entries WHERE userID = ?`;
+
+    db.all(sql, [userID], function (err, rows) {
+        if (err) {
+            console.error('Database error:', err.message);
+            callback(err, null);
+        } else {
+            // Decrypt journal entry data
+            const decryptedRows = rows.map(row => {
+                return {
+                    ...row,
+                    journalCover: decrypt(row.journalCover, encryptionKey),
+                    entryTitle: decrypt(row.entryTitle, encryptionKey),
+                    entryText: decrypt(row.entryText, encryptionKey),
+                    imageURL: row.imageURL ? decrypt(row.imageURL, encryptionKey) : null // Check if imageURL exists before decrypting
+                };
+            });
+            console.log('Journal Entries have been retrieved with user ID:', userID);
             callback(null, decryptedRows);
         }
     });
@@ -325,8 +381,10 @@ module.exports = {
     addUser,
     getUserBySpotifyID,
     addTrack,
+    getTrackbyTrackID,
     addJournalEntry,
     getJournalEntriesByTrackID,
+    getAllUserJournalEntries,
     updateJournalEntry,
     deleteJournalEntry,
     checkUserExists,

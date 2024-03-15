@@ -1,0 +1,23 @@
+.journal-collection.preview {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    cursor: pointer;
+  }
+  
+  .journal-collection.expanded {
+    display: flex;
+    flex-direction: column;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .journal-entry-preview {
+    width: 100px; /* adjust as necessary */
+    height: 100px; /* adjust as necessary */
+    background-size: cover;
+    background-position: center;
+  }
+  
+  /* Additional styles for scrollbar, etc. */
+  

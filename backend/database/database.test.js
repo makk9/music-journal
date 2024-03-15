@@ -1,4 +1,4 @@
-const { db, addUser, getUserBySpotifyID, addTrack, addJournalEntry, getJournalEntriesByTrackID,
+const { db, addUser, getUserBySpotifyID, addTrack, addJournalEntry, getJournalEntriesByTrackID, getAllUserJournalEntries,
     updateJournalEntry, deleteJournalEntry, checkUserExists, createUserAfterSpotifyAuth } = require('./database');
 jest.mock('../utils/encryption', () => ({
     encrypt: jest.fn().mockImplementation((text) => `encrypted-${text}`),
@@ -375,6 +375,71 @@ test('getJournalEntriesByTrackID gets journal entries by trackID from the databa
     });
 });
 
+// Test getAllUserJournalEntries function
+test('getAllUserJournalEntries gets all journal entries of user from the database', function (done) {
+    const testUserID1 = 'testUser1'; // valid userID in testing database schema
+    const invalidUserID = 'BATMAN'; // invalid userID not in testing database schema
+
+    const testEntry4 = {
+        entryID: 'testEntry4',
+        userID: 'testUser1', // linking entry to same valid userID as above
+        trackID: 'testTrack1', // linking entry to same valid trackID as above
+        journalCover: 'testAlbumArt4.jpg',
+        entryTitle: 'testttestetsetes',
+        entryText: 'I love this track so much, I want to write about it again!',
+        imageURL: 'http://Studying.jpg',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+
+    const testEntry5 = {
+        entryID: 'testEntry5',
+        userID: 'testUser1', // linking entry to same valid userID as above
+        trackID: 'testTrack2', // linking entry to a new trackID
+        journalCover: 'testAlbumArt5.jpg',
+        entryTitle: 'Numbers',
+        entryText: '49 is my favorite number which is why I like this track even more!',
+        imageURL: 'http://Motorcycle.jpg',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+
+
+    // TEST 1: Get all journal entries for user
+    getAllUserJournalEntries(testUserID1, function (err, entries) {
+        expect(err).toBeNull();
+        expect(entries).toHaveLength(2); // check how many entries associated with track
+        expect(entries[0].entryText).toEqual('This song reminds me of summer...'); // check entry text content associated with trackID
+
+        // Add another journal entry associated with existing trackID from above to database
+        addJournalEntry(testEntry5, function (err, entryID) {
+
+            // TEST 2: Get all journal entries associated with user ID
+            getAllUserJournalEntries(testUserID1, function (err, entries) {
+                expect(err).toBeNull();
+                expect(entries).toHaveLength(3); // check to see we are getting multiple journal entries associated with trackID
+
+                // Add another journal entry associated with a different trackID from above to database
+                addJournalEntry(testEntry4, function (err, entryID) {
+
+                    // TEST 3: Get all journal entries associated with user ID after another journal entry addition
+                    getAllUserJournalEntries(testUserID1, function (err, entries) {
+                        expect(err).toBeNull();
+                        expect(entries).toHaveLength(4); // check to see we are getting multiple journal entries associated with trackID
+
+                        // TEST 4: Get all journal entries associated with invalid userID
+                        getAllUserJournalEntries(invalidUserID, function (err, entries) {
+                            expect(err).toBeNull();
+                            expect(entries).toHaveLength(0); // check to see we are getting 0 entries for an invalid userID query
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+    });
+});
+
 // Test updateJournalEntry function
 test('updateJournalEntry updates journal entry in the database', function (done) {
     const testEntryID1 = 'testEntry1';
@@ -469,7 +534,7 @@ test('deleteJournalEntry deletes journal entries from the database', function (d
     // Verify the journal entries count linked with userID before deletion
     db.get("SELECT COUNT(*) AS count FROM journal_entries WHERE userID = ?", [testUserID1], function (err, result) {
         expect(err).toBeNull();
-        expect(result.count).toBe(2); // testUserID1 has 2 journal entry before deletion(testEntry1 and testEntry3)
+        expect(result.count).toBe(4); // testUserID1 has 4 journal entry before deletion(testEntry1 and testEntry3)
 
         // TEST 1: Delete journal entry from database
         deleteJournalEntry(testEntryID1, testUserID1, function (err) {
@@ -483,7 +548,7 @@ test('deleteJournalEntry deletes journal entries from the database', function (d
                 // Verify the journal entries count linked with userID after deletion
                 db.get("SELECT COUNT(*) AS count FROM journal_entries WHERE userID = ?", [testUserID1], function (err, result) {
                     expect(err).toBeNull();
-                    expect(result.count).toBe(1); // testUserID1 has 0 journal entries after deletion
+                    expect(result.count).toBe(3); // testUserID1 has 3 journal entries after deletion
 
                     // TEST 2: Deletes non-existent journal entry with valid userID from database
                     deleteJournalEntry(testEntryID1, testUserID1, function (err, entryID) {

@@ -28,4 +28,19 @@ trackRouter.post('/track', authenticateUser, function (req, res) {
     });
 });
 
+// Endpoint to get journal entries for specific track ID from database
+trackRouter.get('/track/:trackId', authenticateUser, function (req, res) {
+    console.log("GET TRACK ENDPOINT");
+    const { trackId } = req.params;
+
+    db.getTrackbyTrackID(trackId, function (err, track) {
+        if (err) {
+            console.error('Failed to retrieve track:', err);
+            res.status(500).send('Failed to retrieve track');
+        } else {
+            res.json(track);
+        }
+    });
+});
+
 module.exports = trackRouter;
