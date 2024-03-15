@@ -85,6 +85,24 @@ function addTrack(track, callback) {
 };
 
 /**
+ * Get track by spotifyTrackID.
+ * @param {string} trackID - The spotifyTrackID of the track for which to retrieve.
+ * @param {Function} callback - A callback function to be called with the results.
+ */
+function getTrackbyTrackID(trackID, callback) {
+    const sql = `SELECT * FROM tracks WHERE spotifyTrackID = ?`;
+
+    db.get(sql, [trackID], function (err, row) {
+        if (err) {
+            console.error('Database error:', err.message);
+            callback(err, null);
+        } else {
+            callback(null, row);
+        }
+    });
+}
+
+/**
  * Adds a new journal entry to the database.
  * @param {Object} entry - The journal entry object to add.
  * @param {Function} callback - A callback function to be called with the results.
@@ -363,6 +381,7 @@ module.exports = {
     addUser,
     getUserBySpotifyID,
     addTrack,
+    getTrackbyTrackID,
     addJournalEntry,
     getJournalEntriesByTrackID,
     getAllUserJournalEntries,
