@@ -46,6 +46,19 @@
   background-color: #0056b3;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.vinyl-spinning {
+  animation: spin 2s linear infinite;
+}
+
+.vinyl-paused { 
+  animation-play-state: paused;
+}
+
 .vinyl-icon {
   position: absolute;
   bottom: 10px;
@@ -55,7 +68,7 @@
   background: transparent;
 }
 
-.vinyl-icon:hover {
+.vinyl-paused:hover {
   transform: rotate(360deg);
 }
 

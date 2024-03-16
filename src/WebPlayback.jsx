@@ -230,6 +230,7 @@ function WebPlayback(props) {
             activeEntry={activeEntry}
             isCreatingNewEntry={isCreatingNewEntry}
             setIsCreatingNewEntry={setIsCreatingNewEntry}
+            isMusicPlaying={!is_paused && is_active}
           />
         </div>
       </div>

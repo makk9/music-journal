@@ -16,10 +16,12 @@ function getDefaultEntryTitle() {
   return `${dateString} at ${timeString}`;
 }
 
-function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCreatingNewEntry, setIsCreatingNewEntry, linkedTrack }) {
+function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCreatingNewEntry, setIsCreatingNewEntry, linkedTrack, isMusicPlaying }) {
   const [entryTitle, setEntryTitle] = useState(getDefaultEntryTitle);
   const [entryText, setEntryText] = useState("");
   const [imageURL, setImageURL] = useState("");
+
+  const vinylClass = `vinyl-icon ${isMusicPlaying ? "vinyl-spinning" : "vinyl-paused"}`;
 
   useEffect(() => {
     if (isCreatingNewEntry) {
@@ -146,7 +148,7 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
         />
         <button onClick={handleSave}>Save Entry</button>
         <div className="journal-entry-vinyl">
-          <img src={vinylIcon} alt="Vinyl" className="vinyl-icon" />
+          <img src={vinylIcon} alt="Vinyl" className={vinylClass} />
           <div className="track-hover-info">
             {linkedTrack // Check if linkedTrack is not null
               ? `${linkedTrack.trackTitle} by ${linkedTrack.artist}`
