@@ -1,33 +1,30 @@
-.journal-entry-title {
-  margin-bottom: 10px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-  width: 95%;
-}
-
 .journal-entry {
   position: relative;
   display: flex;
-  flex-direction: column;
-  margin: 20px;
+  flex-direction: column; 
+  margin: 20px auto; /* center horizontally */
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   background-color: white;
-  width: 50%;
-  margin-top: 50px; /* Adds space above the journal entry */
+  width: 100%;
+  max-width: 1000px;
+  height: 100%;
 }
 
+.journal-entry-title,
 .journal-entry textarea {
+  font-size: 16px;
   margin-bottom: 10px;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  height: 300px; /* Fixed height for the textarea */
-  width: 98.5%;
-  resize: none; /* Disable the ability to resize the textarea */
+  width: 100%;
+  box-sizing: border-box; /* includes padding and border in width */
+}
+
+.journal-entry textarea {
+  height: 90%;
 }
 
 .journal-entry button {

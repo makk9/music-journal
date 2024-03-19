@@ -1,20 +1,20 @@
 .journal-collection.preview {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
     cursor: pointer;
   }
   
   .journal-collection.expanded {
     display: flex;
     flex-direction: column;
-    max-height: 400px;
+    max-height: 45vh;
+    width: 50vh;
     overflow-y: auto;
+    right: 0%; /* Fit against right */
   }
   
-  .journal-entry-preview {
-    width: 100px; /* adjust as necessary */
-    height: 100px; /* adjust as necessary */
+  .journal-collection-preview {
+    aspect-ratio: 1 / 1; /* Maintains a square aspect ratio */
     background-size: cover;
     background-position: center;
   }

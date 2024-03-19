@@ -50,14 +50,14 @@ function JournalCollection({ refJournalEntries, onEntrySelect }) {
     <div ref={journalCollectionRef} className={`journal-collection ${isExpanded ? "expanded" : "preview"}`} onClick={toggleExpand}>
       {isExpanded
         ? journalEntries.map((entry) => (
-            <div className="journal-entry-full" key={entry.id} onClick={() => onEntrySelect(entry)}>
+            <div className="journal-collection-full" key={entry.id} onClick={() => onEntrySelect(entry)}>
               <p>{entry.entryTitle}</p>
               {/* <p>{new Date(entry.createdAt).toLocaleDateString()}</p> */}
               <img src={entry.journalCover} alt="Journal Cover" />
             </div>
           ))
         : journalEntries.slice(0, 4).map((entry) => (
-            <div className="journal-entry-preview" key={entry.id} style={{ backgroundImage: `url(${entry.journalCover})` }}>
+            <div className="journal-collection-preview" key={entry.id} style={{ backgroundImage: `url(${entry.journalCover})` }}>
               {/* Only the cover is shown */}
             </div>
           ))}
