@@ -11,17 +11,11 @@ const track = {
   artists: [{ name: "" }],
 };
 
-/* TODO:
- * Add comments
- * Add tests
- * Playback backdrop
- */
-
 function WebPlayback(props) {
   const [player, setPlayer] = useState(undefined);
   const [is_paused, setPaused] = useState(false);
   const [is_active, setActive] = useState(false);
-  const [current_track, setTrack] = useState(track);
+  const [current_track, setTrack] = useState(undefined);
 
   const albumArtRef = useRef(null); // Ref to the album art image
   const [backgroundColor, setBackgroundColor] = useState("rgba(255,255,255,0.5)"); // State to hold the background color
@@ -105,7 +99,6 @@ function WebPlayback(props) {
       window.onSpotifyWebPlaybackSDKReady = null;
     };
 
-    //const uniqueDeviceName = `MusicJournal-${Date.now()}`;
     window.onSpotifyWebPlaybackSDKReady = () => {
       console.log("CREATING NEW PLAYER");
       const player = new window.Spotify.Player({
@@ -115,7 +108,7 @@ function WebPlayback(props) {
         },
         volume: 0.5,
       });
-
+      
       setPlayer(player);
 
       player.addListener("ready", ({ device_id }) => {

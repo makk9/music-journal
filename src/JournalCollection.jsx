@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import "./JournalCollection.css";
 
 function JournalCollection({ refJournalEntries, onEntrySelect }) {
-  //return <div className="journal-collection">Journal Collection Component</div>;
 
   const [journalEntries, setJournalEntries] = useState([]);
   const [isExpanded, setIsExpanded] = useState(false);

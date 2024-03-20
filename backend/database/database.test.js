@@ -1,5 +1,5 @@
 const { db, addUser, getUserBySpotifyID, addTrack, addJournalEntry, getJournalEntriesByTrackID, getAllUserJournalEntries,
-    updateJournalEntry, deleteJournalEntry, checkUserExists, createUserAfterSpotifyAuth } = require('./database');
+    updateJournalEntry, deleteJournalEntry, checkUserExists, createUserAfterSpotifyAuth, getTrackbyTrackID } = require('./database');
 jest.mock('../utils/encryption', () => ({
     encrypt: jest.fn().mockImplementation((text) => `encrypted-${text}`),
     decrypt: jest.fn().mockImplementation((text) => text.replace('encrypted-', '')),
@@ -194,6 +194,32 @@ test('addTrack adds tracks to the database', function (done) {
                     });
                 });
             });
+        });
+    });
+});
+
+// Test getTrackbyTrackID
+test('getTrackByTrackID gets track by trackID from the database', function (done) {
+    const testTrack1 = {
+        spotifyTrackID: 'testTrack1',
+        trackTitle: 'I Beat Them All',
+        artist: 'Daniel Pemberton',
+        album: 'Spider-Man: Across the Spiderverse'
+    };
+
+    const validTrackID = 'testTrack1';
+    const invalidTrackID = 'testTrackInvalid';
+
+    // TEST 1: Get track with valid trackID from database
+    getTrackbyTrackID(validTrackID, function (err, track) {
+        expect(err).toBeNull();
+        expect(track).toEqual(testTrack1);
+
+        // TEST 2: Get track with invalid trackID from database
+        getTrackbyTrackID(invalidTrackID, function (err, track) {
+            expect(err).toBeNull();
+            expect(track).toBeUndefined();
+            done();
         });
     });
 });

@@ -108,11 +108,6 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
           throw new Error("Failed to save journal entry");
         }
 
-        // refreshJournalEntries(); // refresh journal collection
-        // // Handle the response, clear the text & image area, give user feedback
-        // setEntryTitle(getDefaultEntryTitle);
-        // setEntryText("");
-        // setImageURL("");
         alert("Journal entry saved!");
       } catch (error) {
         // Handle error state, provide user feedback
