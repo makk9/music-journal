@@ -10,7 +10,7 @@
     max-height: 45vh;
     width: 50vh;
     overflow-y: auto;
-    right: 0%; /* Fit against right */
+    right: -5%; /* Fit against right */
   }
   
   .journal-collection-preview {
