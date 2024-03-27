@@ -21,7 +21,8 @@ db.serialize(() => {
     spotifyTrackID TEXT PRIMARY KEY,
     trackTitle TEXT NOT NULL,
     artist TEXT NOT NULL,
-    album TEXT NOT NULL
+    album TEXT NOT NULL,
+    uri TEXT NOT NULL
   );`);
 
   // Journal Entries Table

@@ -7,6 +7,7 @@ const track = {
   name: "",
   album: {
     images: [{ url: "" }],
+    uri: "",
   },
   artists: [{ name: "" }],
 };
@@ -120,6 +121,7 @@ function WebPlayback(props) {
       });
 
       player.addListener("player_state_changed", (state) => {
+
         if (!state) {
           console.log("State is null, resetting track information");
           setTrack(track);

@@ -31,7 +31,6 @@ async function fetchSpotifyUserProfile(accessToken) {
  * @param {Function} next - The next middleware function in the stack.
  */
 async function authenticateUser(req, res, next) {
-    //const accessToken = req.headers.authorization?.split(' ')[1];
 
     const accessToken = req.cookies.accessToken;
 

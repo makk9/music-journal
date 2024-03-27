@@ -40,7 +40,41 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
       setImageURL(activeEntry.imageURL);
     }
   }, [activeEntry]);
+  
+  async function handleVinylClick() {
+    // Confirm if the user wants to play the music
+    const confirmPlay = window.confirm("Do you want to play this track?");
 
+    if (confirmPlay) {
+      // If linkedTrack is not null, play the music using Spotify's API
+      if (linkedTrack) {
+        console.log("LINKED TRACK:", linkedTrack);
+        try {
+        const response = await fetch('/play', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ trackUri: linkedTrack.uri })
+        });
+
+        if (response.ok) {
+            console.log('Track is playing');
+        } else {
+            const errorText = await response.text();
+            console.error('Failed to play track:', errorText);
+        }
+    } catch (error) {
+        console.error('Error playing track:', error);
+    }
+
+
+      } else {
+        alert("No track is linked to play.");
+      }
+    }
+  }
+  
   async function handleSave() {
     // For updating an existing journal entry
     if (activeEntry) {
@@ -81,6 +115,7 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
             trackTitle: currentTrack.name,
             artist: currentTrack.artists.map((artist) => artist.name).join(", "),
             album: currentTrack.album.name,
+            uri: currentTrack.uri,
           }),
         });
 
@@ -143,7 +178,7 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
         />
         <button onClick={handleSave}>Save Entry</button>
         <div className="journal-entry-vinyl">
-          <img src={vinylIcon} alt="Vinyl" className={vinylClass} />
+          <img src={vinylIcon} alt="Vinyl" className={vinylClass} onClick={handleVinylClick} />
           <div className="track-hover-info">
             {linkedTrack // Check if linkedTrack is not null
               ? `${linkedTrack.trackTitle} by ${linkedTrack.artist}`

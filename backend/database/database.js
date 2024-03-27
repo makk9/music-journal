@@ -70,10 +70,10 @@ function getUserBySpotifyID(userID, callback) {
  * @param {Function} callback - A callback function to be called with the results.
  */
 function addTrack(track, callback) {
-    const { spotifyTrackID, trackTitle, artist, album } = track;
-    const sql = `INSERT OR IGNORE INTO tracks (spotifyTrackID, trackTitle, artist, album) VALUES (?, ?, ?, ?)`;
+    const { spotifyTrackID, trackTitle, artist, album, uri } = track;
+    const sql = `INSERT OR IGNORE INTO tracks (spotifyTrackID, trackTitle, artist, album, uri) VALUES (?, ?, ?, ?, ?)`;
 
-    db.run(sql, [spotifyTrackID, trackTitle, artist, album], function (err) {
+    db.run(sql, [spotifyTrackID, trackTitle, artist, album, uri], function (err) {
         if (err) {
             console.error('Database error:', err.message);
             callback(err, null);

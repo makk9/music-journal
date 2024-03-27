@@ -8,7 +8,7 @@ const { generateUniqueID } = require('../../utils/utilityFunctions');
 // Endpoint adds track that has been posted from client to database
 trackRouter.post('/track', authenticateUser, function (req, res) {
     console.log("TRACK ENDPOINT");
-    const { spotifyTrackID, trackTitle, artist, album } = req.body;
+    const { spotifyTrackID, trackTitle, artist, album, uri } = req.body;
     //const trackID = generateUniqueID();
 
     // Insert new track into the database
@@ -17,7 +17,8 @@ trackRouter.post('/track', authenticateUser, function (req, res) {
         spotifyTrackID,
         trackTitle,
         artist,
-        album
+        album,
+        uri
     }, function (err) {
         if (err) {
             console.error('Failed to add track:', err);
