@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./JournalEntry.css";
 import vinylIcon from "./animated-vinyl.png";
+import attachImageIcon from "./image-attach.png";
 
 /** TODO:
  * Add attaching image capability to entry
@@ -73,6 +74,10 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
         alert("No track is linked to play.");
       }
     }
+  }
+
+  async function handleImgAttachClick() {
+    
   }
   
   async function handleSave() {
@@ -187,6 +192,7 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
               : "No track linked"}
           </div>
         </div>
+        <img src={attachImageIcon} alt="Attach" className="attach-icon" onClick={handleImgAttachClick} />
       </div>
     </>
   );

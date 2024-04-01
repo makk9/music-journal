@@ -19,12 +19,13 @@
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  width: 100%;
+  width: 95%;
   box-sizing: border-box; /* includes padding and border in width */
 }
 
 .journal-entry textarea {
   height: 90%;
+  width: 100%;
 }
 
 .journal-entry button {
@@ -83,3 +84,12 @@
 .vinyl-icon:hover + .track-hover-info {
   display: block;
 }
+
+.attach-icon {
+  position: absolute;
+  top: 10px; /* Position it 10px from the top */
+  right: 10px; /* Position it 10px from the left */
+  width: 50px; /* Maintain the size as per the vinyl icon */
+  cursor: pointer; /* Optional: changes cursor to pointer on hover */
+}
+
