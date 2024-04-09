@@ -114,7 +114,8 @@ function addJournalEntry(entry, callback) {
     const encryptedJournalCover = encrypt(journalCover, encryptionKey);
     const encryptedEntryTitle = encrypt(entryTitle, encryptionKey);
     const encryptedEntryText = encrypt(entryText, encryptionKey);
-    const encryptedImageURL = encrypt(imageURL, encryptionKey);
+    //const encryptedImageURL = encrypt(imageURL, encryptionKey);
+    const encryptedImageURL = imageURL;
 
     const sql = `INSERT INTO journal_entries (entryID, userID, trackID, journalCover, entryTitle, entryText, imageURL, createdAt, updatedAt)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
@@ -151,7 +152,8 @@ function getJournalEntriesByTrackID(trackID, userID, callback) {
                     journalCover: decrypt(row.journalCover, encryptionKey),
                     entryTitle: decrypt(row.entryTitle, encryptionKey),
                     entryText: decrypt(row.entryText, encryptionKey),
-                    imageURL: row.imageURL ? decrypt(row.imageURL, encryptionKey) : null // Check if imageURL exists before decrypting
+                    //imageURL: row.imageURL ? decrypt(row.imageURL, encryptionKey) : null // Check if imageURL exists before decrypting
+                    imageURL: row.imageURL ? row.imageURL : null
                 };
             });
             console.log('Journal Entries have been retrieved with track ID:', trackID);
@@ -180,7 +182,8 @@ function getAllUserJournalEntries(userID, callback) {
                     journalCover: decrypt(row.journalCover, encryptionKey),
                     entryTitle: decrypt(row.entryTitle, encryptionKey),
                     entryText: decrypt(row.entryText, encryptionKey),
-                    imageURL: row.imageURL ? decrypt(row.imageURL, encryptionKey) : null // Check if imageURL exists before decrypting
+                    //imageURL: row.imageURL ? decrypt(row.imageURL, encryptionKey) : null // Check if imageURL exists before decrypting
+                    imageURL: row.imageURL ? row.imageURL : null
                 };
             });
             console.log('Journal Entries have been retrieved with user ID:', userID);
@@ -224,7 +227,8 @@ function updateJournalEntry(entryID, userID, data, callback) {
     if (data.imageURL !== undefined) {
         fieldsToUpdate.push("imageURL = ?");
         // encrypt imageURL data
-        const encryptedImageURL = encrypt(data.imageURL, encryptionKey);
+        //const encryptedImageURL = encrypt(data.imageURL, encryptionKey);
+        const encryptedImageURL = data.imageURL;
         sqlValues.push(encryptedImageURL);
     }
 
