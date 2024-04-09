@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./JournalEntry.css";
+import ImageModal from "./ImageModal";
 import vinylIcon from "./animated-vinyl.png";
 import attachImageIcon from "./image-attach.png";
 
@@ -20,7 +21,8 @@ function getDefaultEntryTitle() {
 function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCreatingNewEntry, setIsCreatingNewEntry, linkedTrack, isMusicPlaying }) {
   const [entryTitle, setEntryTitle] = useState(getDefaultEntryTitle);
   const [entryText, setEntryText] = useState("");
-  const [imageURL, setImageURL] = useState("");
+  const [imageURL, setImageURL] = useState([]);
+  const [showImageModal, setShowImageModal] = useState("");
 
   const vinylClass = `vinyl-icon ${isMusicPlaying ? "vinyl-spinning" : "vinyl-paused"}`;
 
@@ -38,10 +40,12 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
     if (activeEntry) {
       setEntryTitle(activeEntry.entryTitle);
       setEntryText(activeEntry.entryText);
-      setImageURL(activeEntry.imageURL);
+      //setImageURL(activeEntry.imageURL);
+      const deserializedImages = JSON.parse(activeEntry.imageURL || '[]'); // Default to empty array if undefined
+      setImageURL(deserializedImages);
     }
   }, [activeEntry]);
-  
+
   async function handleVinylClick() {
     // Confirm if the user wants to play the music
     const confirmPlay = window.confirm("Do you want to play this track?");
@@ -51,25 +55,23 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
       if (linkedTrack) {
         console.log("LINKED TRACK:", linkedTrack);
         try {
-        const response = await fetch('/play', {
-            method: 'PUT',
+          const response = await fetch("/play", {
+            method: "PUT",
             headers: {
-                'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
-            body: JSON.stringify({ trackUri: linkedTrack.uri })
-        });
+            body: JSON.stringify({ trackUri: linkedTrack.uri }),
+          });
 
-        if (response.ok) {
-            console.log('Track is playing');
-        } else {
+          if (response.ok) {
+            console.log("Track is playing");
+          } else {
             const errorText = await response.text();
-            console.error('Failed to play track:', errorText);
+            console.error("Failed to play track:", errorText);
+          }
+        } catch (error) {
+          console.error("Error playing track:", error);
         }
-    } catch (error) {
-        console.error('Error playing track:', error);
-    }
-
-
       } else {
         alert("No track is linked to play.");
       }
@@ -77,10 +79,17 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
   }
 
   async function handleImgAttachClick() {
-    
+    setShowImageModal(true);
   }
-  
+
+  async function onAddImage(files) {
+    const newImageURLs = files.map((file) => URL.createObjectURL(file));
+    setImageURL([...imageURL, ...newImageURLs]); // Update your state to include new images
+  }
+
   async function handleSave() {
+    const serializedImageURL = JSON.stringify(imageURL);
+
     // For updating an existing journal entry
     if (activeEntry) {
       // Call Put Journal Entry Endpoint that updates journal entry
@@ -95,7 +104,7 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
         body: JSON.stringify({
           entryTitle,
           entryText,
-          imageURL,
+          imageURL: serializedImageURL,
         }),
       });
 
@@ -104,7 +113,7 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
       }
 
       alert("Journal entry updated!");
-    } 
+    }
     // User is creating and adding a new journal entry
     else {
       try {
@@ -140,7 +149,7 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
             journalCover: currentTrack.album.images[0].url,
             entryTitle,
             entryText,
-            imageURL,
+            imageURL: serializedImageURL,
           }),
         });
 
@@ -177,7 +186,7 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
           onChange={(e) => {
             setEntryText(e.target.value);
             // hardcoding image value for now
-            setImageURL("Batman.jpg");
+            //setImageURL("Batman.jpg");
           }}
           placeholder="Write your journal entry here..."
         />
@@ -194,6 +203,13 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
         </div>
         <img src={attachImageIcon} alt="Attach" className="attach-icon" onClick={handleImgAttachClick} />
       </div>
+      {showImageModal && (
+        <ImageModal
+          onClose={() => setShowImageModal(false)}
+          imageURLs={Array.isArray(imageURL) ? imageURL : [imageURL]} // Ensure imageURL is an array
+          onAddImage={onAddImage}
+        />
+      )}
     </>
   );
 }
