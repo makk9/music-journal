@@ -114,7 +114,6 @@ function addJournalEntry(entry, callback) {
     const encryptedJournalCover = encrypt(journalCover, encryptionKey);
     const encryptedEntryTitle = encrypt(entryTitle, encryptionKey);
     const encryptedEntryText = encrypt(entryText, encryptionKey);
-    //const encryptedImageURL = encrypt(imageURL, encryptionKey);
     const encryptedImageURL = imageURL;
 
     const sql = `INSERT INTO journal_entries (entryID, userID, trackID, journalCover, entryTitle, entryText, imageURL, createdAt, updatedAt)
@@ -199,7 +198,6 @@ function getAllUserJournalEntries(userID, callback) {
  * @param {function} callback - A callback function that is called after the update operation is completed.
  */
 function updateJournalEntry(entryID, userID, data, callback) {
-    //const { entryText, imageURL, updatedAt } = data;
     let fieldsToUpdate = [];
     let sqlValues = [];
 
@@ -226,8 +224,6 @@ function updateJournalEntry(entryID, userID, data, callback) {
     }
     if (data.imageURL !== undefined) {
         fieldsToUpdate.push("imageURL = ?");
-        // encrypt imageURL data
-        //const encryptedImageURL = encrypt(data.imageURL, encryptionKey);
         const encryptedImageURL = data.imageURL;
         sqlValues.push(encryptedImageURL);
     }
@@ -351,33 +347,6 @@ function closeDb() {
         console.log('Closed the database connection.');
     });
 };
-
-// // Example: Adding a user, a track, and journal entry
-// addUser({
-//     userID: 'user123',
-//     username: 'musiclover',
-//     email: 'user@example.com'
-// });
-
-// addTrack({
-//     trackID: 'track456',
-//     spotifyTrackID: 'spotify:track:123abc',
-//     title: 'Song Name',
-//     artist: 'Artist Name',
-//     album: 'Album Name'
-// });
-
-// addJournalEntry({
-//     entryID: 'entry789',
-//     userID: 'user123',
-//     trackID: 'track456',
-//     entryText: 'This song reminds me of summer...',
-//     imageURL: 'http://path.to/image.jpg',
-//     createdAt: new Date().toISOString(),
-//     updatedAt: new Date().toISOString()
-// }, closeDb); // Pass the closeDb function as a callback
-
-
 
 // Exports the functions for use in other parts of the application
 module.exports = {

@@ -4,14 +4,6 @@ const backgroundRouter = express.Router();
 const { authenticateUser } = require('../middlewares/authenticateUser');
 const Vibrant = require('node-vibrant');
 
-
-// TODO: If we can find a way to sort of crop album art as to only look at center art and base background color off that, it could look better.
-// Reason being is that a contrast of the background with the edges of album art makes art pop out more and looks better I think. Just conjecture.
-// Also could be cool to have the option to set your own background and somehow merge album art background with it.
-// Could also be cool if you can find color that "pops" out the most in an album that's not within the defined borders of album art.
-// Also, if we could somehow ignore the skin color of any human on the cover why extracting theme color could be ideal. 
-// If we could get two main primary colors and gradient them that could be cool
-
 // Endpoint to dynamically set backgroudn color of application based on primary color extracted from album art.
 
 backgroundRouter.get('/background', authenticateUser, async function (req, res) {

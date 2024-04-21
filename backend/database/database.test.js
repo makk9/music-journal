@@ -4,8 +4,6 @@ jest.mock('../utils/encryption', () => ({
     encrypt: jest.fn().mockImplementation((text) => `encrypted-${text}`),
     decrypt: jest.fn().mockImplementation((text) => text.replace('encrypted-', '')),
 }));
-// const { encrypt, decrypt } = require('../utils/encryption');
-// const encryptionKey = process.env.ENCRYPTION_KEY;
 
 // Initialize database schema for testing
 beforeAll(function (done) {

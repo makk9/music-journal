@@ -4,10 +4,6 @@ import ImageModal from "./ImageModal";
 import vinylIcon from "./animated-vinyl.png";
 import attachImageIcon from "./image-attach.png";
 
-/** TODO:
- * Add attaching image capability to entry
- */
-
 function getDefaultEntryTitle() {
   const dateOptions = { weekday: "long", year: "numeric", month: "short", day: "numeric" };
   const timeOptions = { hour: "numeric", minute: "2-digit", hour12: true };
@@ -30,7 +26,7 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
     if (isCreatingNewEntry) {
       setEntryTitle(getDefaultEntryTitle);
       setEntryText("");
-      setImageURL("");
+      setImageURL([]);
       setIsCreatingNewEntry(false); // want to reset back to false after we have already reset journal state
     }
   }, [isCreatingNewEntry, setIsCreatingNewEntry]);
@@ -40,7 +36,6 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
     if (activeEntry) {
       setEntryTitle(activeEntry.entryTitle);
       setEntryText(activeEntry.entryText);
-      //setImageURL(activeEntry.imageURL);
       const deserializedImages = JSON.parse(activeEntry.imageURL || '[]'); // Default to empty array if undefined
       setImageURL(deserializedImages);
     }
@@ -82,8 +77,7 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
     setShowImageModal(true);
   }
 
-  async function onAddImage(files) {
-    const newImageURLs = files.map((file) => URL.createObjectURL(file));
+  async function onAddImage(newImageURLs) {
     setImageURL([...imageURL, ...newImageURLs]); // Update your state to include new images
   }
 
@@ -185,8 +179,6 @@ function JournalEntry({ currentTrack, refreshJournalEntries, activeEntry, isCrea
           value={entryText}
           onChange={(e) => {
             setEntryText(e.target.value);
-            // hardcoding image value for now
-            //setImageURL("Batman.jpg");
           }}
           placeholder="Write your journal entry here..."
         />

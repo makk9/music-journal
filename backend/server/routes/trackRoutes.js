@@ -9,11 +9,9 @@ const { generateUniqueID } = require('../../utils/utilityFunctions');
 trackRouter.post('/track', authenticateUser, function (req, res) {
     console.log("TRACK ENDPOINT");
     const { spotifyTrackID, trackTitle, artist, album, uri } = req.body;
-    //const trackID = generateUniqueID();
 
     // Insert new track into the database
     db.addTrack({
-        //trackID,
         spotifyTrackID,
         trackTitle,
         artist,

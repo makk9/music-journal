@@ -1,12 +1,32 @@
-import React, {useRef} from "react";
+import React, { useRef } from "react";
 
 function ImageModal({ onClose, imageURLs, onAddImage }) {
   const fileInputRef = useRef(null);
 
-  function handleFileInputChange(e) {
+  // Handle file input change and upload files
+  async function handleFileInputChange(e) {
     const files = Array.from(e.target.files);
-    onAddImage(files); // Pass the selected files to the parent component
-  };
+    // Create a FormData object to send via POST
+    const formData = new FormData();
+    files.forEach((file) => formData.append("file", file));
+
+    // Upload Request
+    try {
+      const response = await fetch("/images/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      const imageUrls = await response.json();
+      onAddImage([imageUrls.url]);
+    } catch (error) {
+      console.error("Error uploading files:", error);
+    }
+  }
 
   function handleAddMoreImagesClick() {
     if (fileInputRef.current) {
@@ -14,7 +34,7 @@ function ImageModal({ onClose, imageURLs, onAddImage }) {
     }
   }
 
-  return (  
+  return (
     <div className="image-modal-backdrop">
       <div className="image-modal-content">
         <div className="images-list">
@@ -29,9 +49,9 @@ function ImageModal({ onClose, imageURLs, onAddImage }) {
         accept="image/*"
         onChange={handleFileInputChange}
         style={{ display: "none" }} // Hide the input element
-        ref={(fileInputRef)}
+        ref={fileInputRef}
       />
-      <button onClick={handleAddMoreImagesClick}>Add More Images</button>
+      <button onClick={handleAddMoreImagesClick}>Add Images</button>
       <button onClick={onClose}>Close</button>
     </div>
   );
