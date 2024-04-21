@@ -15,8 +15,10 @@
         "css-select": "^5.1.0",
         "jest": "^29.7.0",
         "load-json-file": "^7.0.1",
+        "multer": "^1.4.5-lts.1",
         "node-mocks-http": "^1.14.1",
         "node-vibrant": "^3.2.1-alpha.1",
+        "phin": "^3.7.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-scripts": "^5.0.1",
@@ -74,5 +76,8 @@
                 "postcss": "^8.4.31"
             }
         }
-    }
+    },
+    "resolutions": {
+        "phin": "^3.7.1"
+      }
 }
