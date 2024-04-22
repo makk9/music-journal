@@ -1,8 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
-// import WebPlayback from './WebPlayback';
-// import Login from './Login';
 
 // Mock child components - Webplayback and Login
 jest.mock('./WebPlayback', () => {

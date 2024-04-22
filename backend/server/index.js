@@ -8,6 +8,7 @@ const backgroundRoutes = require('./routes/backgroundRoutes');
 const trackRoutes = require('./routes/trackRoutes');
 const journalRoutes = require('./routes/journalRoutes');
 const playerRoutes = require('./routes/playerRoutes');
+const imageRoutes = require('./routes/imageRoutes');
 
 
 
@@ -24,6 +25,7 @@ app.use(backgroundRoutes);
 app.use(trackRoutes);
 app.use(journalRoutes);
 app.use(playerRoutes);
+app.use(imageRoutes);
 
 // Only start the server if this file is run directly
 if (require.main === module) {
