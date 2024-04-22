@@ -1,5 +1,6 @@
 # Music Journal 
 The Music Journal allows you to create and maintain a personal journal attached to your favorite songs. Utilizing the Spotify API, the application provides a platform where you can stream music, record personal writings, and attach images to capture and securely store thoughts and feelings linked to the music you listen to. 
+![Screenshot (3)](https://github.com/makk9/music-journal/assets/117951691/d835c707-6ea8-41df-b7f3-ded9b925a935)
 
 # Getting Started with Create React App
 
